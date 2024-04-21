@@ -1,7 +1,9 @@
-package com.fcw.usercenter.service;
+package com.fcw.partner.service;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-import com.fcw.usercenter.model.domain.User;
+import com.fcw.partner.model.domain.User;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Assertions;
@@ -49,5 +51,11 @@ class UserServiceTest {
         request.getSession().setAttribute("userLoginState",new Date());
         User user = userService.userLogin(userAccount, userPassword,request);
         System.out.println(user);
+    }
+
+    @Test
+    void searchUserByTags() {
+
+
     }
 }

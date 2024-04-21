@@ -1,7 +1,6 @@
-package com.fcw.usercenter.common;
+package com.fcw.partner.common;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 /**
  * 错误码

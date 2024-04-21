@@ -1,6 +1,6 @@
-package com.fcw.usercenter.mapper;
+package com.fcw.partner.mapper;
 
-import com.fcw.usercenter.model.domain.User;
+import com.fcw.partner.model.domain.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**

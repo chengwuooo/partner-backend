@@ -1,4 +1,4 @@
-package com.fcw.usercenter.contant;
+package com.fcw.partner.contant;
 
 public interface UserConstant {
     public final String USER_LOGIN_STATE= "userLoginState";

@@ -1,14 +1,14 @@
-package com.fcw.usercenter.controller;
+package com.fcw.partner.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.fcw.usercenter.common.BaseResponse;
-import com.fcw.usercenter.common.ErrorCode;
-import com.fcw.usercenter.common.ResultUtils;
-import com.fcw.usercenter.exception.BusinessException;
-import com.fcw.usercenter.model.domain.User;
-import com.fcw.usercenter.model.domain.request.UserLoginRequest;
-import com.fcw.usercenter.model.domain.request.UserRegisterRequest;
-import com.fcw.usercenter.service.UserService;
+import com.fcw.partner.common.BaseResponse;
+import com.fcw.partner.common.ErrorCode;
+import com.fcw.partner.common.ResultUtils;
+import com.fcw.partner.exception.BusinessException;
+import com.fcw.partner.model.domain.User;
+import com.fcw.partner.model.domain.request.UserLoginRequest;
+import com.fcw.partner.model.domain.request.UserRegisterRequest;
+import com.fcw.partner.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.fcw.usercenter.contant.UserConstant.ADMIN_ROLE;
-import static com.fcw.usercenter.contant.UserConstant.USER_LOGIN_STATE;
+import static com.fcw.partner.contant.UserConstant.ADMIN_ROLE;
+import static com.fcw.partner.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * 用户接口
@@ -73,8 +73,8 @@ public class UserController {
         // TODO 校验用户是否合法
         User user = userService.getById(userId);
 
-        User safeUser = userService.getSafeUser(user);
-        return ResultUtils.success(safeUser);
+        User SafetyUser = userService.getSafetyUser(user);
+        return ResultUtils.success(SafetyUser);
     }
 
     @GetMapping("search")
@@ -89,7 +89,41 @@ public class UserController {
         }
         List<User> userList = userService.list(userQueryWrapper);
         List<User> list = userList.stream().map(user -> {
-            return userService.getSafeUser(user);
+            return userService.getSafetyUser(user);
+        }).collect(Collectors.toList());
+        return ResultUtils.success(list);
+    }
+
+    @GetMapping("searchByAdmin")
+    public BaseResponse<List<User>> searchUsersByAdmin(String username, HttpServletRequest request) {
+        //仅管理员可以查看用户列表
+        if (!isAdmin(request))
+            throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
+
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        if (StringUtils.isNotBlank(username)) {
+            userQueryWrapper.like("username", username);
+        }
+        List<User> userList = userService.list(userQueryWrapper);
+        List<User> list = userList.stream().map(user -> {
+            return userService.getSafetyUser(user);
+        }).collect(Collectors.toList());
+        return ResultUtils.success(list);
+    }
+
+    @GetMapping("search")
+    public BaseResponse<List<User>> searchUsersByUser(String username, HttpServletRequest request) {
+        //仅管理员可以查看用户列表
+        if (!isAdmin(request))
+            throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
+
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        if (StringUtils.isNotBlank(username)) {
+            userQueryWrapper.like("username", username);
+        }
+        List<User> userList = userService.list(userQueryWrapper);
+        List<User> list = userList.stream().map(user -> {
+            return userService.getSafetyUser(user);
         }).collect(Collectors.toList());
         return ResultUtils.success(list);
     }

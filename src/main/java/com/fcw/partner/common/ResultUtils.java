@@ -1,4 +1,4 @@
-package com.fcw.usercenter.common;
+package com.fcw.partner.common;
 
 /**
  * 通用工具类

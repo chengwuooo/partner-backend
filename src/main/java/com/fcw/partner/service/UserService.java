@@ -1,8 +1,10 @@
-package com.fcw.usercenter.service;
+package com.fcw.partner.service;
 
-import com.fcw.usercenter.model.domain.User;
+import com.fcw.partner.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.List;
 
 /**
 * @author chengwu
@@ -33,7 +35,7 @@ public interface UserService extends IService<User> {
      * @param user
      * @return
      */
-    User getSafeUser(User user);
+    User getSafetyUser(User user);
 
     /**
      * 用户登出
@@ -41,4 +43,14 @@ public interface UserService extends IService<User> {
      * @return
      */
     void userLogout(HttpServletRequest request);
+
+    /**
+     * @param tagList
+     * @return
+     * @description 根据标签搜索用户
+     */
+    List<User> searchUserByTags(List<String> tagList);
+
+
+    List<User> searchUsersByUsername(String username);
 }

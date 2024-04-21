@@ -1,4 +1,4 @@
-package com.fcw.usercenter.model.domain;
+package com.fcw.partner.model.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
@@ -79,6 +79,11 @@ public class User implements Serializable {
      * 0-管理员 1-普通用户 2-VIP
      */
     private Integer userRole;
+
+    /**
+     * 标签列表
+     */
+    private String tags;
 
 
     @TableField(exist = false)

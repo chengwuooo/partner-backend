@@ -1,6 +1,6 @@
-package com.fcw.usercenter.exception;
+package com.fcw.partner.exception;
 
-import com.fcw.usercenter.common.ErrorCode;
+import com.fcw.partner.common.ErrorCode;
 
 /**
  * 自定义异常类

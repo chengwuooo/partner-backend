@@ -1,9 +1,8 @@
-package com.fcw.usercenter.exception;
+package com.fcw.partner.exception;
 
-import com.fcw.usercenter.common.BaseResponse;
-import com.fcw.usercenter.common.ErrorCode;
-import com.fcw.usercenter.common.ResultUtils;
-import lombok.extern.log4j.Log4j;
+import com.fcw.partner.common.BaseResponse;
+import com.fcw.partner.common.ErrorCode;
+import com.fcw.partner.common.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
