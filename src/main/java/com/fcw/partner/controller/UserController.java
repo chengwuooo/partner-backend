@@ -1,6 +1,7 @@
 package com.fcw.partner.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fcw.partner.common.BaseResponse;
 import com.fcw.partner.common.ErrorCode;
 import com.fcw.partner.common.ResultUtils;
@@ -17,7 +18,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.fcw.partner.contant.UserConstant.ADMIN_ROLE;
 import static com.fcw.partner.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -102,13 +102,20 @@ public class UserController {
         return ResultUtils.success(userList);
     }
 
+    @GetMapping("/recommend")
+    public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNum, HttpServletRequest request) {
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        Page<User> userList = userService.page(new Page<>(pageNum, pageSize), wrapper);
+        return ResultUtils.success(userList);
+    }
+
     @PostMapping("/update")
-    public BaseResponse<Integer> updateUsers(@RequestBody User updateUser, HttpServletRequest request){
-        if (updateUser == null )
+    public BaseResponse<Integer> updateUsers(@RequestBody User updateUser, HttpServletRequest request) {
+        if (updateUser == null)
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         User loginUser = userService.getLoginUser(request);
 
-        int result = userService.updateUser(updateUser,loginUser);
+        int result = userService.updateUser(updateUser, loginUser);
         return ResultUtils.success(result);
     }
 
@@ -133,7 +140,6 @@ public class UserController {
         userService.userLogout(request);
         return ResultUtils.success("登出成功");
     }
-
 
 
 }
