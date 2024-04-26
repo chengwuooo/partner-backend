@@ -5,27 +5,28 @@
 <mapper namespace="com.fcw.partner.mapper.UserMapper">
 
     <resultMap id="BaseResultMap" type="com.fcw.partner.model.domain.User">
-        <id property="id" column="id" jdbcType="BIGINT"/>
-        <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
-        <result property="username" column="username" jdbcType="VARCHAR"/>
-        <result property="avatarUrl" column="avatarUrl" jdbcType="VARCHAR"/>
-        <result property="gender" column="gender" jdbcType="TINYINT"/>
-        <result property="userPassword" column="userPassword" jdbcType="VARCHAR"/>
-        <result property="phone" column="phone" jdbcType="VARCHAR"/>
-        <result property="email" column="email" jdbcType="VARCHAR"/>
-        <result property="userStatus" column="userStatus" jdbcType="INTEGER"/>
-        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-        <result property="updataTime" column="updataTime" jdbcType="TIMESTAMP"/>
-        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
-        <result property="userRole" column="userRole" jdbcType="INTEGER"/>
-        <result property="tags" column="tags" jdbcType="VARCHAR"/>
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="username" column="username" jdbcType="VARCHAR"/>
+            <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
+            <result property="avatarUrl" column="avatarUrl" jdbcType="VARCHAR"/>
+            <result property="gender" column="gender" jdbcType="TINYINT"/>
+            <result property="profile" column="profile" jdbcType="VARCHAR"/>
+            <result property="phone" column="phone" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="userStatus" column="userStatus" jdbcType="INTEGER"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+            <result property="userRole" column="userRole" jdbcType="INTEGER"/>
+            <result property="tags" column="tags" jdbcType="VARCHAR"/>
+            <result property="userPassword" column="userPassword" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,userAccount,username,
-        avatarUrl,gender,userPassword,
+        id,username,userAccount,
+        avatarUrl,gender,profile,
         phone,email,userStatus,
-        createTime,updataTime,isDelete,
-        userRole,tags
+        createTime,updateTime,isDelete,
+        userRole,tags,userPassword
     </sql>
 </mapper>
