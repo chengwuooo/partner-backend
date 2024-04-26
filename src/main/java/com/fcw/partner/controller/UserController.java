@@ -9,11 +9,11 @@ import com.fcw.partner.model.domain.User;
 import com.fcw.partner.model.domain.request.UserLoginRequest;
 import com.fcw.partner.model.domain.request.UserRegisterRequest;
 import com.fcw.partner.service.UserService;
-import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +27,8 @@ import static com.fcw.partner.contant.UserConstant.USER_LOGIN_STATE;
  */
 @RestController
 @RequestMapping("/user")
+//@CrossOrigin()
+@CrossOrigin(origins = {"http://localhost:3000"})
 public class UserController {
     @Resource
     private UserService userService;
@@ -77,10 +79,10 @@ public class UserController {
         return ResultUtils.success(SafetyUser);
     }
 
-    @GetMapping("search")
+    @GetMapping("/search")
     public BaseResponse<List<User>> searchUsers(String username, HttpServletRequest request) {
         //仅管理员可以查看用户列表
-        if (!isAdmin(request))
+        if (!userService.isAdmin(request))
             throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
 
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
@@ -94,45 +96,27 @@ public class UserController {
         return ResultUtils.success(list);
     }
 
-    @GetMapping("searchByAdmin")
-    public BaseResponse<List<User>> searchUsersByAdmin(String username, HttpServletRequest request) {
-        //仅管理员可以查看用户列表
-        if (!isAdmin(request))
-            throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
-
-        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-        if (StringUtils.isNotBlank(username)) {
-            userQueryWrapper.like("username", username);
-        }
-        List<User> userList = userService.list(userQueryWrapper);
-        List<User> list = userList.stream().map(user -> {
-            return userService.getSafetyUser(user);
-        }).collect(Collectors.toList());
-        return ResultUtils.success(list);
+    @GetMapping("/search/tags")
+    public BaseResponse<List<User>> searchUsersByTags(@RequestParam(required = false) List<String> tagNameList) {
+        List<User> userList = userService.searchUserByTags(tagNameList);
+        return ResultUtils.success(userList);
     }
 
-    @GetMapping("search")
-    public BaseResponse<List<User>> searchUsersByUser(String username, HttpServletRequest request) {
-        //仅管理员可以查看用户列表
-        if (!isAdmin(request))
-            throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
+    @PostMapping("/update")
+    public BaseResponse<Integer> updateUsers(@RequestBody User updateUser, HttpServletRequest request){
+        if (updateUser == null )
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        User loginUser = userService.getLoginUser(request);
 
-        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-        if (StringUtils.isNotBlank(username)) {
-            userQueryWrapper.like("username", username);
-        }
-        List<User> userList = userService.list(userQueryWrapper);
-        List<User> list = userList.stream().map(user -> {
-            return userService.getSafetyUser(user);
-        }).collect(Collectors.toList());
-        return ResultUtils.success(list);
+        int result = userService.updateUser(updateUser,loginUser);
+        return ResultUtils.success(result);
     }
 
 
-    @PostMapping("delete")
+    @PostMapping("/delete")
     public BaseResponse<Boolean> deleteUser(@RequestParam Long id, HttpServletRequest request) {
         //仅管理员可以删除用户
-        if (!isAdmin(request))
+        if (!userService.isAdmin(request))
             throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
 
         if (id <= 0) {
@@ -150,18 +134,6 @@ public class UserController {
         return ResultUtils.success("登出成功");
     }
 
-    /**
-     * 是否为管理员
-     *
-     * @param request
-     * @return
-     */
-    private boolean isAdmin(HttpServletRequest request) {
-        User userObj = (User) request.getSession().getAttribute(USER_LOGIN_STATE);
-        if (userObj == null || userObj.getUserRole() != ADMIN_ROLE)
-            return false;
-        return true;
-    }
 
 
 }

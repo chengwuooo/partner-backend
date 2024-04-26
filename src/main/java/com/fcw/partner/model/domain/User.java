@@ -38,7 +38,10 @@ public class User implements Serializable {
      * 
      */
     private Integer gender;
-
+    /**
+     * 个人简介
+     */
+    private String profile;
     /**
      * 
      */
@@ -67,7 +70,7 @@ public class User implements Serializable {
     /**
      * 更新日期
      */
-    private Date updataTime;
+    private Date updateTime;
 
     /**
      * 是否删除

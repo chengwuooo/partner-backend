@@ -2,9 +2,10 @@ package com.fcw.partner.service;
 
 import com.fcw.partner.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
-import jakarta.servlet.http.HttpServletRequest;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+
 
 /**
 * @author chengwu
@@ -28,7 +29,7 @@ public interface UserService extends IService<User> {
      * @param userPassword 用户密码
      * @return 脱敏后的用户信息
      */
-    User userLogin(String userAccount, String userPassword,HttpServletRequest request);
+    User userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
     /**
      * 用户脱敏
@@ -45,12 +46,37 @@ public interface UserService extends IService<User> {
     void userLogout(HttpServletRequest request);
 
     /**
-     * @param tagList
+     * 根据标签名列表搜索用户
+     * @param tagNameList 标签名列表
      * @return
-     * @description 根据标签搜索用户
      */
-    List<User> searchUserByTags(List<String> tagList);
-
+    List<User> searchUserByTags(List<String> tagNameList);
 
     List<User> searchUsersByUsername(String username);
+
+    /**
+     * @param updateUser 更新的用户信息
+     * @param loginUser 登录用户
+     * @return
+     */
+    int updateUser(User updateUser, User loginUser);
+
+    /**
+     * 获取登录用户
+     * @return
+     */
+    User getLoginUser(HttpServletRequest request);
+
+    /**
+     * 判断是否是管理员
+     * @return
+     */
+    boolean isAdmin(HttpServletRequest request) ;
+
+    /**
+     * 判断是否是管理员
+     * @param loginUser 登录用户
+     * @return
+     */
+    boolean isAdmin(User loginUser) ;
 }

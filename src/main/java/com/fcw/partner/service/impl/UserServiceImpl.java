@@ -1,31 +1,33 @@
 package com.fcw.partner.service.impl;
 
-import java.nio.charset.StandardCharsets;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fcw.partner.common.BaseResponse;
 import com.fcw.partner.common.ErrorCode;
 import com.fcw.partner.exception.BusinessException;
+import com.fcw.partner.mapper.UserMapper;
 import com.fcw.partner.model.domain.User;
 import com.fcw.partner.service.UserService;
-import com.fcw.partner.mapper.UserMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
-import java.util.HashSet;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.fcw.partner.contant.UserConstant.ADMIN_ROLE;
 import static com.fcw.partner.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -45,9 +47,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private static final String salt = "fcw";
 
     @Override
-    public long userRegister(String userAccount,String userPassword,String checkPassword) {
+    public long userRegister(String userAccount, String userPassword, String checkPassword) {
         //1.校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword )) {
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "参数不能为空");
         }
         if (userAccount.length() < 3) {
@@ -80,7 +82,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (count > 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "账号已存在");
         }
-
 
 
         //3.保存到数据库
@@ -169,65 +170,167 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     /**
-     * 根据标签搜索用户(内存过滤）
-     * @param tagNameList 标签名称列表，用于搜索用户的标签依据。这个参数不能为空，否则会抛出业务异常。
-     * @return 返回符合所有标签条件的用户列表。返回的用户列表已经做了安全处理。
-     * @throws BusinessException 如果标签列表为空，则抛出业务异常，提示参数错误。
+     * 根据标签搜索用户。
+     *
+     * @param tagNameList 用户要搜索的标签
+     * @return
      */
     @Override
-    public List<User> searchUserByTags(List<String> tagNameList){
-        // 校验输入的标签列表是否为空，如果为空，则抛出业务异常
-        if (tagNameList.size()==0)
+    public List<User> searchUserByTags(List<String> tagNameList) {
+        if (CollectionUtils.isEmpty(tagNameList)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
-
-        // 创建查询包装器
+        }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        //拼接tag
+        // like '%Java%' and like '%Python%'
+        for (String tagList : tagNameList) {
+            queryWrapper = queryWrapper.like("tags", tagList);
+        }
         List<User> userList = userMapper.selectList(queryWrapper);
+        return userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
 
-        // 使用Gson对用户标签进行处理，以判断用户是否符合搜索条件
-        Gson gson = new Gson();
-        userList.stream().filter(user -> {
-            String tagstr = user.getTags();
-            if (StringUtils.isBlank(tagstr)){
-                return false;
-            }
-            Set<String> tempTagNameSet =  gson.fromJson(tagstr,new TypeToken<Set<String>>(){}.getType());
-            tempTagNameSet = Optional.ofNullable(tempTagNameSet).orElse(new HashSet<>());
-
-            for (String tagName : tagNameList){
-                if (!tempTagNameSet.contains(tagName)){
-                    return false;
-                }
-            }
-            return true;
-        }).map(this::getSafetyUser).collect(Collectors.toList());
-
-        // 返回经过安全处理的用户列表
-        return  userList;
+//        //1.先查询所有用户
+//        QueryWrapper queryWrapper = new QueryWrapper<>();
+//        List<User> userList = userMapper.selectList(queryWrapper);
+//        Gson gson = new Gson();
+//        //2.判断内存中是否包含要求的标签
+//        return userList.stream().filter(user -> {
+//            String tagstr = user.getTags();
+//
+//
+//
+//            if (StringUtils.isBlank(tagstr)){
+//                return false;
+//            }
+//            Set<String> tempTagNameSet =  gson.fromJson(tagstr,new TypeToken<Set<String>>(){}.getType());
+//            System.out.println("tagstr:"+tagstr);
+//            for (String tagName : tagNameList){
+//                if (!tempTagNameSet.contains(tagName)){
+//                    return false;
+//                }
+//            }
+//            System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+//            return true;
+//        }).map(this::getSafetyUser).collect(Collectors.toList());
     }
+
+//    /**
+//     * 根据标签搜索用户(内存过滤）
+//     * @param tagNameList 标签名称列表，用于搜索用户的标签依据。这个参数不能为空，否则会抛出业务异常。
+//     * @return 返回符合所有标签条件的用户列表。返回的用户列表已经做了安全处理。
+//     * @throws BusinessException 如果标签列表为空，则抛出业务异常，提示参数错误。
+//     */
+//    @Override
+//    public List<User> searchUserByTags(List<String> tagNameList){
+//        // 校验输入的标签列表是否为空，如果为空，则抛出业务异常
+//        if (tagNameList.size()==0)
+//            throw new BusinessException(ErrorCode.PARAM_ERROR);
+//
+//        // 创建查询包装器
+//        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+//        List<User> userList = userMapper.selectList(queryWrapper);
+//
+//        // 使用Gson对用户标签进行处理，以判断用户是否符合搜索条件
+//        Gson gson = new Gson();
+//        userList.stream().filter(user -> {
+//            String tagstr = user.getTags();
+//            if (StringUtils.isBlank(tagstr)){
+//                return false;
+//            }
+//            Set<String> tempTagNameSet =  gson.fromJson(tagstr,new TypeToken<Set<String>>(){}.getType());
+//            tempTagNameSet = Optional.ofNullable(tempTagNameSet).orElse(new HashSet<>());
+//
+//            for (String tagName : tagNameList){
+//                if (!tempTagNameSet.contains(tagName)){
+//                    return false;
+//                }
+//            }
+//            return true;
+//        }).map(this::getSafetyUser).collect(Collectors.toList());
+//
+//        // 返回经过安全处理的用户列表
+//        return  userList;
+//    }
 
     /**
      * 根据标签搜索用户。
      * 该方法将根据提供的用户名关键字搜索用户，返回与关键字匹配的用户列表。
+     *
      * @param username 要搜索的用户名关键字。
      * @return 返回一个包含与搜索关键字匹配的用户列表的集合。
      */
     @Override
-    public List<User> searchUsersByUsername(String username){
+    public List<User> searchUsersByUsername(String username) {
 
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         // 创建查询包装器，用于构建SQL查询条件
 
-            queryWrapper = queryWrapper.like("username", username);
+        queryWrapper = queryWrapper.like("username", username);
 
         // 根据查询条件查询用户列表
         List<User> userList = userMapper.selectList(queryWrapper);
 
         // 对查询结果进行处理，返回安全用户信息列表
-        return  userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
+        return userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
+    }
+
+    @Override
+    public int updateUser(User updateUser, User loginUser) throws BusinessException {
+        // 检查 loginUser 是否为 null
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        long updateId = updateUser.getId();
+        // 检查 updateId 是否合法
+        if (updateId <= 0) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+
+        // 管理员可修改任何用户的信息
+        if (isAdmin(loginUser)) {
+            User oldUser = userMapper.selectById(updateId);
+            // 当尝试更新的用户不存在时抛出异常
+            if (oldUser == null) {
+                throw new BusinessException(ErrorCode.NULL_ERROR);
+            }
+            userMapper.updateById(updateUser);
+        }
+        // 用户只能修改自己的信息
+        else {
+            // 若不是管理员且尝试更新的用户ID不是自己的，则无权限修改
+            if (updateId != loginUser.getId()) {
+                throw new BusinessException(ErrorCode.NO_AUTH);
+            }
+            userMapper.updateById(updateUser);
+        }
+        // 返回更新成功的记录数（此处根据实际需求调整，假设updateById返回了更新的记录数）
+        return 1;
     }
 
 
+    @Override
+    public User getLoginUser(HttpServletRequest request) {
+        if (request == null)
+            throw new BusinessException(ErrorCode.NULL_LOGIN);
+
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        return (User) userObj;
+    }
+
+    @Override
+    public boolean isAdmin(User loginUser) {
+        if (loginUser == null || loginUser.getUserRole() != ADMIN_ROLE)
+            return false;
+        return true;
+    }
+
+    @Override
+    public boolean isAdmin(HttpServletRequest request) {
+        User userObj = (User) request.getSession().getAttribute(USER_LOGIN_STATE);
+        if (userObj == null || userObj.getUserRole() != ADMIN_ROLE)
+            return false;
+        return true;
+    }
 
 
 }
