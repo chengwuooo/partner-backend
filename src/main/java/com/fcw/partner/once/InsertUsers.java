@@ -18,7 +18,6 @@ import static org.apache.commons.lang3.RandomUtils.*;
 
 
 @Component
-
 public class InsertUsers {
     @Resource
     private UserMapper userMapper;

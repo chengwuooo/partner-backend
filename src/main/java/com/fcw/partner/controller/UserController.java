@@ -10,12 +10,17 @@ import com.fcw.partner.model.domain.User;
 import com.fcw.partner.model.domain.request.UserLoginRequest;
 import com.fcw.partner.model.domain.request.UserRegisterRequest;
 import com.fcw.partner.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.Serializable;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.fcw.partner.contant.UserConstant.USER_LOGIN_STATE;
@@ -27,11 +32,14 @@ import static com.fcw.partner.contant.UserConstant.USER_LOGIN_STATE;
  */
 @RestController
 @RequestMapping("/user")
-//@CrossOrigin()
+@Slf4j
 @CrossOrigin(origins = {"http://localhost:3000"})
 public class UserController {
     @Resource
     private UserService userService;
+
+    @Resource
+    private RedisTemplate<String, Serializable> redisTemplate;
 
     @RequestMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
@@ -103,10 +111,24 @@ public class UserController {
     }
 
     @GetMapping("/recommend")
-    public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNum, HttpServletRequest request) {
+    public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNum,HttpServletRequest request) {
+        String redisKey = String.format("partner:recommendUsers:%s",userService.getLoginUser(request).getId());
+        ValueOperations<String, Serializable> valueOperations = redisTemplate.opsForValue();
+        //如果有缓存，直接返回缓存
+        Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
+        if (userPage != null) {
+            return ResultUtils.success(userPage);
+        }
+        //如果没有缓存，查询数据库
         QueryWrapper<User> wrapper = new QueryWrapper<>();
-        Page<User> userList = userService.page(new Page<>(pageNum, pageSize), wrapper);
-        return ResultUtils.success(userList);
+        userPage = userService.page(new Page<>(pageNum, pageSize), wrapper);
+        //缓存结果
+        try {
+            valueOperations.set(redisKey, userPage,30000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.error("缓存失败", e);
+        }
+        return ResultUtils.success(userPage);
     }
 
     @PostMapping("/update")
