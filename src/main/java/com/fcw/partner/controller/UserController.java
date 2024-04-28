@@ -116,6 +116,10 @@ public class UserController {
         ValueOperations<String, Serializable> valueOperations = redisTemplate.opsForValue();
         //如果有缓存，直接返回缓存
         Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
+        if(userPage == null){
+            redisKey = String.format("partner:recommendUsers:%s%s",pageSize,pageNum);
+            userPage = (Page<User>) valueOperations.get(redisKey);
+        }
         if (userPage != null) {
             return ResultUtils.success(userPage);
         }
@@ -136,6 +140,8 @@ public class UserController {
         if (updateUser == null)
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         User loginUser = userService.getLoginUser(request);
+        if (loginUser == null)
+            throw new BusinessException(ErrorCode.NULL_LOGIN);
 
         int result = userService.updateUser(updateUser, loginUser);
         return ResultUtils.success(result);

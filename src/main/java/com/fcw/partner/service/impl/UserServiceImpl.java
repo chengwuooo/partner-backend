@@ -312,7 +312,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public User getLoginUser(HttpServletRequest request) {
         if (request == null)
-            throw new BusinessException(ErrorCode.NULL_LOGIN);
+            return null;
 
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         return (User) userObj;

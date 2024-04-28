@@ -26,12 +26,12 @@ public class PreCacheJob {
     private final List<Long> mainUserList = Collections.singletonList(1L);
 
     // 每天执行，预热推荐用户
-    @Scheduled(cron = "0 1 * * * *")   //自己设置时间测试
+    @Scheduled(cron = "0 58 12 * * *")   //自己设置时间测试
     public void doCacheRecommendUser() {
         //查数据库
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         Page<User> userPage = userService.page(new Page<>(1,100),queryWrapper);
-        String redisKey = String.format("recommendUsers:%s",mainUserList);
+        String redisKey = String.format("partner:recommendUsers:%s",mainUserList);
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
         //写缓存,30s过期
         try {

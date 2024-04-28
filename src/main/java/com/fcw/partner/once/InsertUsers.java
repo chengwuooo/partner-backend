@@ -29,13 +29,13 @@ public class InsertUsers {
     public void doInsertUser() {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        final int INSERT_NUM = 100;
+        final int INSERT_NUM = 9000;
         for (int i = 0; i < INSERT_NUM; i++) {
             User user =new User();
-            user.setUsername("是一只鱼宴");
+            user.setUsername("是一个假数据");
             user.setUserAccount("fakeUser");
-            user.setAvatarUrl("https://b0.bdstatic.com/ec9dec35df68568a76f2d26e372becf3.jpg@h_1280");
-            user.setProfile("嗦粉么咯老铁");
+            user.setAvatarUrl("https://img2.baidu.com/it/u=2920879629,2349199079&fm=253&app=138&size=w931&n=0&f=JPEG&fmt=auto?sec=1714323600&t=b083b814efa1d2b690ec0bab177b1370");
+            user.setProfile("是一个假数据");
             user.setGender(nextInt(0, 2));
             user.setUserPassword("12345678");
             user.setPhone("123456789108");
