@@ -1,4 +1,4 @@
-package com.fcw.partner.model.domain.request;
+package com.fcw.partner.model.request;
 
 import lombok.Data;
 
