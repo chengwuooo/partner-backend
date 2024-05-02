@@ -79,4 +79,6 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean isAdmin(User loginUser) ;
+
+    List<User> matchUsers(long num, User loginUser);
 }

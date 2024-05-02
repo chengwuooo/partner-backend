@@ -2,27 +2,28 @@ package com.fcw.partner.service.impl;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fcw.partner.common.BaseResponse;
 import com.fcw.partner.common.ErrorCode;
 import com.fcw.partner.exception.BusinessException;
 import com.fcw.partner.mapper.UserMapper;
 import com.fcw.partner.model.domain.User;
 import com.fcw.partner.service.UserService;
+import com.fcw.partner.utils.AlgorithmUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -50,25 +51,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         //1.校验
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "参数不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数不能为空");
         }
         if (userAccount.length() < 3) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "账号不能少于3位");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号不能少于3位");
         }
         if (userPassword.length() < 7 || checkPassword.length() < 7) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "密码不能少于7位");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码不能少于7位");
         }
 
         //账户不能包含特殊字符
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
         if (matcher.find()) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "账号不能包含特殊字符");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号不能包含特殊字符");
         }
 
         //密码和确认密码必须一致
         if (!userPassword.equals(checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "密码和确认密码不一致");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码和确认密码不一致");
         }
 
         //2.对密码进行加密
@@ -80,7 +81,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 //        long count = this.count(queryWrapper);
         long count = userMapper.selectCount(queryWrapper);
         if (count > 0) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "账号已存在");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号已存在");
         }
 
 
@@ -112,7 +113,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
         if (matcher.find()) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "账号不能包含特殊字符");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号不能包含特殊字符");
         }
         //2.加密
         String newPassword = DigestUtils.md5DigestAsHex((userPassword + salt).getBytes(StandardCharsets.UTF_8));
@@ -125,9 +126,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //用户不存在
         if (user == null) {
             log.info("用户登录失败，用户名或密码错误");
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "用户名或密码错误");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户名或密码错误");
         }
-
 
         //4.脱敏用户信息
         User safetyUser = getSafetyUser(user);
@@ -179,7 +179,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public List<User> searchUserByTags(List<String> tagNameList) {
         if (CollectionUtils.isEmpty(tagNameList)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         //拼接tag
@@ -225,7 +225,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 //    public List<User> searchUserByTags(List<String> tagNameList){
 //        // 校验输入的标签列表是否为空，如果为空，则抛出业务异常
 //        if (tagNameList.size()==0)
-//            throw new BusinessException(ErrorCode.PARAM_ERROR);
+//            throw new BusinessException(ErrorCode.PARAMS_ERROR);
 //
 //        // 创建查询包装器
 //        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -279,12 +279,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public int updateUser(User updateUser, User loginUser) throws BusinessException {
         // 检查 loginUser 是否为 null
         if (loginUser == null) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         long updateId = updateUser.getId();
         // 检查 updateId 是否合法
         if (updateId <= 0) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
         // 管理员可修改任何用户的信息
@@ -331,6 +331,55 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (userObj == null || userObj.getUserRole() != ADMIN_ROLE)
             return false;
         return true;
+    }
+
+    @Override
+    public List<User> matchUsers(long num, User loginUser) {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("id", "tags");
+        queryWrapper.isNotNull("tags");
+        List<User> userList = this.list(queryWrapper);
+        String tags = loginUser.getTags();
+        Gson gson = new Gson();
+        List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
+        }.getType());
+        // 用户列表的下标 => 相似度
+        List<Pair<User, Long>> list = new ArrayList<>();
+        // 依次计算所有用户和当前用户的相似度
+        for (int i = 0; i < userList.size(); i++) {
+            User user = userList.get(i);
+            String userTags = user.getTags();
+            // 无标签或者为当前用户自己
+            if (StringUtils.isBlank(userTags) || user.getId() == loginUser.getId()) {
+                continue;
+            }
+            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
+            }.getType());
+            // 计算分数
+            long distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            list.add(new Pair<>(user, distance));
+        }
+        // 按编辑距离由小到大排序
+        List<Pair<User, Long>> topUserPairList = list.stream()
+                .sorted((a, b) -> (int) (a.getValue() - b.getValue()))
+                .limit(num)
+                .collect(Collectors.toList());
+        // 原本顺序的 userId 列表
+        List<Long> userIdList = topUserPairList.stream().map(pair -> pair.getKey().getId()).collect(Collectors.toList());
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.in("id", userIdList);
+        // 1, 3, 2
+        // User1、User2、User3
+        // 1 => User1, 2 => User2, 3 => User3
+        Map<Long, List<User>> userIdUserListMap = this.list(userQueryWrapper)
+                .stream()
+                .map(user -> getSafetyUser(user))
+                .collect(Collectors.groupingBy(User::getId));
+        List<User> finalUserList = new ArrayList<>();
+        for (Long userId : userIdList) {
+            finalUserList.add(userIdUserListMap.get(userId).get(0));
+        }
+        return finalUserList;
     }
 
 

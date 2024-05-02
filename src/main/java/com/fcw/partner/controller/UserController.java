@@ -33,7 +33,7 @@ import static com.fcw.partner.contant.UserConstant.USER_LOGIN_STATE;
 @RestController
 @RequestMapping("/user")
 @Slf4j
-@CrossOrigin(origins = {"http://localhost:3000"})
+//@CrossOrigin(origins = {"http://localhost:3000","http://47.109.196.49"})
 public class UserController {
     @Resource
     private UserService userService;
@@ -44,14 +44,14 @@ public class UserController {
     @RequestMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
 
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "参数不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数不能为空");
         }
         long result = userService.userRegister(userAccount, userPassword, checkPassword);
         return new BaseResponse<>(0, result, "注册成功");
@@ -60,13 +60,13 @@ public class UserController {
     @RequestMapping("/login")
     public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
         if (userLoginRequest == null) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
 
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "参数不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数不能为空");
         }
         User result = userService.userLogin(userAccount, userPassword, request);
         return new BaseResponse<>(0, result, "登录成功");
@@ -77,7 +77,7 @@ public class UserController {
         User userObj = (User) request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User) userObj;
         if (currentUser == null)
-            throw new BusinessException(ErrorCode.NULL_LOGIN);
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
 
         Long userId = currentUser.getId();
         // TODO 校验用户是否合法
@@ -138,10 +138,10 @@ public class UserController {
     @PostMapping("/update")
     public BaseResponse<Integer> updateUsers(@RequestBody User updateUser, HttpServletRequest request) {
         if (updateUser == null)
-            throw new BusinessException(ErrorCode.PARAM_ERROR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         if (loginUser == null)
-            throw new BusinessException(ErrorCode.NULL_LOGIN);
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
 
         int result = userService.updateUser(updateUser, loginUser);
         return ResultUtils.success(result);
@@ -155,7 +155,7 @@ public class UserController {
             throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
 
         if (id <= 0) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "参数错误");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
         }
         boolean b = userService.removeById(id);
         return ResultUtils.success(b);
