@@ -94,13 +94,12 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         if (new Date().after(expireTime)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "超时时间 > 当前时间");
         }
-        // 7. 校验用户最多创建 5 个队伍
-        // todo 有 bug，可能同时创建 100 个队伍
+        // 7. 校验用户最多创建 10 个队伍
         QueryWrapper<Team> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userId", userId);
         long hasTeamNum = this.count(queryWrapper);
-        if (hasTeamNum >= 5) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户最多创建 5 个队伍");
+        if (hasTeamNum >= 10) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户最多创建 10 个队伍");
         }
         // 8. 插入队伍信息到队伍表
         team.setId(null);
@@ -210,7 +209,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             throw new BusinessException(ErrorCode.NULL_ERROR, "队伍不存在");
         }
         // 只有管理员或者队伍的创建者可以修改
-        if (oldTeam.getUserId() != loginUser.getId() && !userService.isAdmin(loginUser)) {
+        if (!Objects.equals(oldTeam.getUserId(), loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
         TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(teamUpdateRequest.getStatus());
@@ -258,8 +257,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                     QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
                     userTeamQueryWrapper.eq("userId", userId);
                     long hasJoinNum = userTeamService.count(userTeamQueryWrapper);
-                    if (hasJoinNum > 5) {
-                        throw new BusinessException(ErrorCode.PARAMS_ERROR, "最多创建和加入 5 个队伍");
+                    if (hasJoinNum > 10) {
+                        throw new BusinessException(ErrorCode.PARAMS_ERROR, "最多创建和加入 10 个队伍");
                     }
                     // 不能重复加入已加入的队伍
                     userTeamQueryWrapper = new QueryWrapper<>();
