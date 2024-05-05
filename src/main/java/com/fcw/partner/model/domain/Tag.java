@@ -8,7 +8,7 @@ import java.util.Date;
 
 /**
  * 标签
- * @TableName tag
+ * &#064;TableName  tag
  */
 @TableName(value ="tag")
 @Data

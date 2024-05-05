@@ -8,11 +8,12 @@ import lombok.Data;
 
 /**
  * 队伍
- * @TableName team
+ * &#064;TableName  team
  */
 @TableName(value ="team")
 @Data
 public class Team implements Serializable {
+
     /**
      * id
      */

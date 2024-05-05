@@ -8,7 +8,7 @@ import lombok.Data;
 
 /**
  * 用户队伍关系
- * @TableName user_team
+ * &#064;TableName  user_team
  */
 @TableName(value ="user_team")
 @Data

@@ -166,12 +166,12 @@ public class TeamController {
     }
 
 
-    //    /**
-//     * 分页查询团队列表
-//     *
-//     * @param teamQuery 包含分页信息和团队查询条件的实体对象
-//     * @return 返回团队分页列表的响应对象
-//     */
+        /**
+     * 分页查询团队列表
+     *
+     * @param teamQuery 包含分页信息和团队查询条件的实体对象
+     * @return 返回团队分页列表的响应对象
+     */
 //    @GetMapping("/list/page")
 //    public BaseResponse<Page<Team>> listTeamsByPage(TeamQuery teamQuery) {
 //        // 校验团队查询参数是否为空，若为空则抛出业务异常
@@ -220,10 +220,6 @@ public class TeamController {
     }
 
 
-
-
-
-
     /**
      * 获取我创建的队伍
      *
@@ -242,7 +238,6 @@ public class TeamController {
         return ResultUtils.success(teamList);
     }
 
-
     /**
      * 获取我加入的队伍
      *
@@ -259,14 +254,6 @@ public class TeamController {
         QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userId", loginUser.getId());
         List<UserTeam> userTeamList = userTeamService.list(queryWrapper);
-        // 取出不重复的队伍 id
-        // teamId userId
-        // 1, 2
-        // 1, 3
-        // 2, 3
-        // result
-        // 1 => 2, 3
-        // 2 => 3
         Map<Long, List<UserTeam>> listMap = userTeamList.stream()
                 .collect(Collectors.groupingBy(UserTeam::getTeamId));
         List<Long> idList = new ArrayList<>(listMap.keySet());
