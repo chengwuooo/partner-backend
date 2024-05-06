@@ -17,23 +17,17 @@ public class RedissonConfig {
 
     //线上环境所需
     private String password;
+
     @Bean
     public RedissonClient redissonClient() {
-        System.out.println("RedissonClient初始化......");
         // 1. Create config object
         Config config = new Config();
 
         // 2. Create Redisson instance
         // Sync and Async API
-        System.out.println("host: " + host);
-        System.out.println("port: " + port);
-//        System.out.println("password: " + password);
-        System.out.println("config: " + config);
 
-        System.out.println("RedissonClient初始化成功");
+        String redisAddress = String.format("redis://%s:%s", host, port);
 
-        String redisAddress = String.format("redis://%s:%s",host,port);
-        System.out.println("redisAddress: " + redisAddress);
         //设置参数（生产环境和测试环境参数不同，注意修改）
         config.useSingleServer()
                 .setAddress(redisAddress)
