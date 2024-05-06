@@ -153,37 +153,6 @@ public class TeamController {
         return ResultUtils.success(teamList);
     }
 
-
-    /**
-     * 分页查询团队列表
-     *
-     * @param teamQuery 包含分页信息和团队查询条件的实体对象
-     * @return 返回团队分页列表的响应对象
-     */
-//    @GetMapping("/list/page")
-//    public BaseResponse<Page<Team>> listTeamsByPage(TeamQuery teamQuery) {
-//        // 校验团队查询参数是否为空，若为空则抛出业务异常
-//        if (teamQuery == null) {
-//            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-//        }
-//        // 创建一个空的Team对象，用于后续设置查询条件
-//        Team team = new Team();
-//        // 从查询参数中获取每页的大小和页码
-//        int pageSize = teamQuery.getPageSize();
-//        int pageNum = teamQuery.getPageNum();
-//        // 将查询参数的属性值复制到Team对象中，用于构建查询Wrapper
-//        BeanUtils.copyProperties(teamQuery, team);
-//        // 创建Page对象，用于分页查询
-//        Page<Team> teamPage = new Page<>(pageSize, pageNum);
-//
-//        // 构建查询条件
-//        QueryWrapper<Team> queryWrapper = new QueryWrapper<>(team);
-//        // 执行分页查询
-//        Page<Team> teamList = teamService.page(teamPage, queryWrapper);
-//        // 将查询结果封装成成功响应对象返回
-//        return ResultUtils.success(teamList);
-//    }
-// todo 查询分页
     @GetMapping("/list/page")
     public BaseResponse<Page<Team>> listTeamsByPage(TeamQuery teamQuery) {
         if (teamQuery == null) {
@@ -209,11 +178,7 @@ public class TeamController {
 
 
     /**
-     * 获取我创建的队伍
-     *
-     * @param teamQuery
-     * @param request
-     * @return
+     * 获取我创建的队伍列表
      */
     @GetMapping("/list/my/create")
     public BaseResponse<List<TeamUserVO>> listMyCreateTeams(TeamQuery teamQuery, HttpServletRequest request) {
@@ -232,7 +197,6 @@ public class TeamController {
 
     /**
      * 获取我加入的队伍列表
-     *
      * @param teamQuery 包含队伍查询条件的对象，例如队伍ID列表
      * @param request 用户的请求对象，用于获取登录用户信息
      * @return 返回一个包含我加入的队伍信息的列表
