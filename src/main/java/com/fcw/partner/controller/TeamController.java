@@ -85,7 +85,6 @@ public class TeamController {
         return ResultUtils.success(result);
     }
 
-
     @PostMapping("/update")
     public BaseResponse<Boolean> updateTeam(@RequestBody Team team) {
         if (team == null) {
@@ -150,23 +149,12 @@ public class TeamController {
             });
         } catch (Exception e) {
         }
-        // 3、查询已加入队伍的人数
-        QueryWrapper<UserTeam> userTeamJoinQueryWrapper = new QueryWrapper<>();
-        userTeamJoinQueryWrapper.in("teamId", teamIdList);
-        System.out.println(teamIdList);
-        //如果teamIdList无数据，返回空列表
-        if (teamIdList.isEmpty()) {
-            return ResultUtils.success(teamList);
-        }
-        List<UserTeam> userTeamList = userTeamService.list(userTeamJoinQueryWrapper);
-        // 队伍 id => 加入这个队伍的用户列表
-        Map<Long, List<UserTeam>> teamIdUserTeamList = userTeamList.stream().collect(Collectors.groupingBy(UserTeam::getTeamId));
-        teamList.forEach(team -> team.setHasJoinNum(teamIdUserTeamList.getOrDefault(team.getId(), new ArrayList<>()).size()));
+        teamList = teamService.AddTeamsJoinNum( teamList,  teamIdList);
         return ResultUtils.success(teamList);
     }
 
 
-        /**
+    /**
      * 分页查询团队列表
      *
      * @param teamQuery 包含分页信息和团队查询条件的实体对象
@@ -235,32 +223,51 @@ public class TeamController {
         User loginUser = userService.getLoginUser(request);
         teamQuery.setUserId(loginUser.getId());
         List<TeamUserVO> teamList = teamService.listTeams(teamQuery, true);
+        teamList = teamService.AddTeamsJoinNum(teamList);
+        teamList.forEach(team -> {
+            team.setHasJoin(true);
+        });
         return ResultUtils.success(teamList);
     }
 
     /**
-     * 获取我加入的队伍
+     * 获取我加入的队伍列表
      *
-     * @param teamQuery
-     * @param request
-     * @return
+     * @param teamQuery 包含队伍查询条件的对象，例如队伍ID列表
+     * @param request 用户的请求对象，用于获取登录用户信息
+     * @return 返回一个包含我加入的队伍信息的列表
      */
     @GetMapping("/list/my/join")
     public BaseResponse<List<TeamUserVO>> listMyJoinTeams(TeamQuery teamQuery, HttpServletRequest request) {
+        // 校验查询参数是否为空
         if (teamQuery == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 获取登录用户信息
         User loginUser = userService.getLoginUser(request);
+        // 构建查询条件，查询我加入的队伍
         QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userId", loginUser.getId());
         List<UserTeam> userTeamList = userTeamService.list(queryWrapper);
+        // 将查询结果按队伍ID分组，以便后续处理
         Map<Long, List<UserTeam>> listMap = userTeamList.stream()
                 .collect(Collectors.groupingBy(UserTeam::getTeamId));
+        // 提取分组后的队伍ID列表
         List<Long> idList = new ArrayList<>(listMap.keySet());
+        // 更新查询条件，指定需要查询的队伍ID列表
         teamQuery.setIdList(idList);
+        System.out.println("teamQuery"+teamQuery);
+        // 查询并返回满足条件的队伍信息列表
         List<TeamUserVO> teamList = teamService.listTeams(teamQuery, true);
+        final List<Long> teamIdList = teamList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
+        teamList.forEach(team -> {
+            team.setHasJoin(true);
+        });
+        teamList = teamService.AddTeamsJoinNum(teamList,  teamIdList);
+        // 构建并返回成功响应
         return ResultUtils.success(teamList);
     }
+
 }
 
 

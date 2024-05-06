@@ -7,6 +7,7 @@ import com.fcw.partner.model.dto.TeamQuery;
 import com.fcw.partner.model.request.TeamJoinRequest;
 import com.fcw.partner.model.request.TeamQuitRequest;
 import com.fcw.partner.model.request.TeamUpdateRequest;
+import com.fcw.partner.model.vo.TeamUserVO;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -37,4 +38,7 @@ public interface TeamService extends IService<Team> {
 
     @Transactional(rollbackFor = Exception.class)
     boolean deleteTeam(long id, User loginUser);
+
+    List<TeamUserVO> AddTeamsJoinNum(List<TeamUserVO> teamList, List<Long> teamIdList);
+    List<TeamUserVO> AddTeamsJoinNum(List<TeamUserVO> teamList);
 }
