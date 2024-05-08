@@ -112,7 +112,8 @@ public class UserController {
 
     @GetMapping("/recommend")
     public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNum,HttpServletRequest request) {
-        String redisKey = String.format("partner:recommendUsers:%s",userService.getLoginUser(request).getId());
+        User loginUser = userService.getLoginUser(request);
+        String redisKey = String.format("partner:recommendUsers:%s", loginUser.getId());
         ValueOperations<String, Serializable> valueOperations = redisTemplate.opsForValue();
         //如果有缓存，直接返回缓存
         Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
@@ -147,7 +148,6 @@ public class UserController {
         return ResultUtils.success(result);
     }
 
-
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteUser(@RequestParam Long id, HttpServletRequest request) {
         //仅管理员可以删除用户
@@ -169,5 +169,26 @@ public class UserController {
         return ResultUtils.success("登出成功");
     }
 
-
+    @GetMapping("/match")
+    public BaseResponse<List<User>> matchUsers(long num, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        String redisKey = String.format("partner:matchUsers:%s",loginUser.getId());
+        ValueOperations<String, Serializable> valueOperations = redisTemplate.opsForValue();
+        //如果有缓存，直接返回缓存
+        List<User> userList = (List<User>) valueOperations.get(redisKey);
+        if (userList != null) {
+            System.out.println("缓存命中");
+            return ResultUtils.success(userList);
+        }
+        //如果没有缓存，查询数据库
+        userList = userService.matchUsers(num,loginUser);
+        //缓存结果
+        try {
+            System.out.println("无缓存");
+            valueOperations.set(redisKey, (Serializable) userList,300000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.error("缓存失败", e);
+        }
+        return ResultUtils.success(userList);
+    }
 }

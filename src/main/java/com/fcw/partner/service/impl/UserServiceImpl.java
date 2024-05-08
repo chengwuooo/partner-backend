@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -313,8 +314,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public User getLoginUser(HttpServletRequest request) {
         if (request == null)
             return null;
-
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        if (userObj == null)
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+
         return (User) userObj;
     }
 
@@ -333,56 +336,68 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return true;
     }
 
+    /**
+     * 根据登录用户的标签匹配其他用户。
+     *
+     * @param num
+     * @param loginUser 当前登录的用户，将根据此用户的标签进行匹配。
+     * @return 匹配到的用户列表，按标签相似度排序，相似度高者优先。
+     */
     @Override
     public List<User> matchUsers(long num, User loginUser) {
+        // 构建查询条件，只查询标签不为空的用户，并只选择id和tags字段
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("id", "tags");
         queryWrapper.isNotNull("tags");
         List<User> userList = this.list(queryWrapper);
+
+        // 获取登录用户的标签，并将其转换为列表形式
         String tags = loginUser.getTags();
+        System.out.println("tags:"+tags);
         Gson gson = new Gson();
         List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
         }.getType());
-        // 用户列表的下标 => 相似度
+
+        // 计算当前用户与所有其他用户的标签相似度，并保存用户及其相似度
         List<Pair<User, Long>> list = new ArrayList<>();
-        // 依次计算所有用户和当前用户的相似度
-        for (int i = 0; i < userList.size(); i++) {
-            User user = userList.get(i);
+        for (User user : userList) {
             String userTags = user.getTags();
-            // 无标签或者为当前用户自己
-            if (StringUtils.isBlank(userTags) || user.getId() == loginUser.getId()) {
+            // 跳过没有标签或为当前用户的记录
+            if (StringUtils.isBlank(userTags) || Objects.equals(user.getId(), loginUser.getId())) {
                 continue;
             }
             List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
             }.getType());
-            // 计算分数
+//            System.out.println("tagList"+tagList+"userTagList:"+userTagList);
+            // 计算标签编辑距离，作为相似度
             long distance = AlgorithmUtils.minDistance(tagList, userTagList);
             list.add(new Pair<>(user, distance));
         }
-        // 按编辑距离由小到大排序
+
+        // 根据相似度对用户进行排序，并选取前num个
         List<Pair<User, Long>> topUserPairList = list.stream()
                 .sorted((a, b) -> (int) (a.getValue() - b.getValue()))
                 .limit(num)
                 .collect(Collectors.toList());
-        // 原本顺序的 userId 列表
+
+        // 获取排序后的用户ID列表，用于后续查询完整的用户信息
         List<Long> userIdList = topUserPairList.stream().map(pair -> pair.getKey().getId()).collect(Collectors.toList());
+
+        // 根据用户ID列表查询用户信息
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
         userQueryWrapper.in("id", userIdList);
-        // 1, 3, 2
-        // User1、User2、User3
-        // 1 => User1, 2 => User2, 3 => User3
         Map<Long, List<User>> userIdUserListMap = this.list(userQueryWrapper)
                 .stream()
-                .map(user -> getSafetyUser(user))
+                .map(this::getSafetyUser)
                 .collect(Collectors.groupingBy(User::getId));
+
+        // 根据用户ID获取最终的用户对象列表，并返回
         List<User> finalUserList = new ArrayList<>();
         for (Long userId : userIdList) {
             finalUserList.add(userIdUserListMap.get(userId).get(0));
         }
         return finalUserList;
     }
-
-
 }
 
 

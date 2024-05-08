@@ -109,22 +109,6 @@ public class TeamController {
         return ResultUtils.success(team);
     }
 
-    //    @PostMapping("/list")
-//    public BaseResponse<List<Team>> listTeams(@RequestBody  TeamQuery teamQuery) {
-//
-//        if (teamQuery == null) {
-//            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-//        }
-//        System.out.println(teamQuery);
-//        Team team = new Team();
-//        BeanUtils.copyProperties(teamQuery, team);
-//        System.out.println(team);
-//        QueryWrapper<Team> queryWrapper = new QueryWrapper<>(team);
-//        System.out.println(queryWrapper);
-//        List<Team> teamList = teamService.list(queryWrapper);
-//        return ResultUtils.success(teamList);
-//    }
-//
     @GetMapping("/list")
     public BaseResponse<List<TeamUserVO>> listTeams(TeamQuery teamQuery, HttpServletRequest request) {
         if (teamQuery == null) {
@@ -176,10 +160,6 @@ public class TeamController {
         return ResultUtils.success(result);
     }
 
-
-    /**
-     * 获取我创建的队伍列表
-     */
     @GetMapping("/list/my/create")
     public BaseResponse<List<TeamUserVO>> listMyCreateTeams(TeamQuery teamQuery, HttpServletRequest request) {
         if (teamQuery == null) {
@@ -195,12 +175,6 @@ public class TeamController {
         return ResultUtils.success(teamList);
     }
 
-    /**
-     * 获取我加入的队伍列表
-     * @param teamQuery 包含队伍查询条件的对象，例如队伍ID列表
-     * @param request 用户的请求对象，用于获取登录用户信息
-     * @return 返回一个包含我加入的队伍信息的列表
-     */
     @GetMapping("/list/my/join")
     public BaseResponse<List<TeamUserVO>> listMyJoinTeams(TeamQuery teamQuery, HttpServletRequest request) {
         // 校验查询参数是否为空
@@ -231,6 +205,7 @@ public class TeamController {
         // 构建并返回成功响应
         return ResultUtils.success(teamList);
     }
+
 
 }
 
