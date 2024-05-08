@@ -19,6 +19,7 @@ import com.fcw.partner.service.TeamService;
 import com.fcw.partner.mapper.TeamMapper;
 import com.fcw.partner.service.UserService;
 import com.fcw.partner.service.UserTeamService;
+import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -253,7 +254,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         // 该用户已加入的队伍数量
         long userId = loginUser.getId();
         // 只有一个线程能获取到锁
-        RLock lock = redissonClient.getLock("partner:join_team");
+        String lockKey = String.format("partner:join_team:%s", teamId);
+        RLock lock = redissonClient.getLock(lockKey);
         try {
             // 抢到锁并执行
             while (true) {
