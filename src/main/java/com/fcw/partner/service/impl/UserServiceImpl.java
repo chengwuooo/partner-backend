@@ -152,8 +152,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         User safetyUser = new User();
         safetyUser.setId(user.getId());
         safetyUser.setUserAccount(user.getUserAccount());
-        safetyUser.setUsername(user.getUsername());
-        safetyUser.setAvatarUrl(user.getAvatarUrl());
+        safetyUser.setUserName(user.getUserName());
+        safetyUser.setUserAvatar(user.getUserAvatar());
         safetyUser.setGender(user.getGender());
         safetyUser.setUserRole(user.getUserRole());
         safetyUser.setPhone(user.getPhone());
@@ -161,7 +161,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safetyUser.setUserStatus(user.getUserStatus());
         safetyUser.setCreateTime(user.getCreateTime());
         safetyUser.setTags(user.getTags());
-        safetyUser.setProfile(user.getProfile());
+        safetyUser.setUserProfile(user.getUserProfile());
 
         return safetyUser;
     }
@@ -258,16 +258,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * 根据标签搜索用户。
      * 该方法将根据提供的用户名关键字搜索用户，返回与关键字匹配的用户列表。
      *
-     * @param username 要搜索的用户名关键字。
+     * @param userName 要搜索的用户名关键字。
      * @return 返回一个包含与搜索关键字匹配的用户列表的集合。
      */
     @Override
-    public List<User> searchUsersByUsername(String username) {
+    public List<User> searchUsersByUserName(String userName) {
 
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         // 创建查询包装器，用于构建SQL查询条件
 
-        queryWrapper = queryWrapper.like("username", username);
+        queryWrapper = queryWrapper.like("userName", userName);
 
         // 根据查询条件查询用户列表
         List<User> userList = userMapper.selectList(queryWrapper);

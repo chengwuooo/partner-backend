@@ -27,12 +27,12 @@ public class User implements Serializable {
     /**
      * 用户昵称
      */
-    private String username;
+    private String userName;
 
     /**
      * 头像
      */
-    private String avatarUrl;
+    private String userAvatar;
 
     /**
      * 
@@ -41,7 +41,7 @@ public class User implements Serializable {
     /**
      * 个人简介
      */
-    private String profile;
+    private String userProfile;
     /**
      * 
      */
@@ -78,10 +78,8 @@ public class User implements Serializable {
     @TableLogic
     private Integer isDelete;
 
-    /**
-     * 0-管理员 1-普通用户 2-VIP
-     */
-    private Integer userRole;
+
+    private String userRole;
 
     /**
      * 标签列表

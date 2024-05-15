@@ -18,7 +18,7 @@ public class UserVO implements Serializable {
     /**
      * 用户昵称
      */
-    private String username;
+    private String userName;
 
     /**
      * 账号
@@ -28,7 +28,7 @@ public class UserVO implements Serializable {
     /**
      * 用户头像
      */
-    private String avatarUrl;
+    private String userAvatar;
 
     /**
      * 性别

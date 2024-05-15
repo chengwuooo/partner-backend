@@ -52,7 +52,7 @@ public interface UserService extends IService<User> {
      */
     List<User> searchUserByTags(List<String> tagNameList);
 
-    List<User> searchUsersByUsername(String username);
+    List<User> searchUsersByUserName(String userName);
 
     /**
      * @param updateUser 更新的用户信息

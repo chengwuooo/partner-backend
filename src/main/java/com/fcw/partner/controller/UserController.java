@@ -88,14 +88,14 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public BaseResponse<List<User>> searchUsers(String username, HttpServletRequest request) {
+    public BaseResponse<List<User>> searchUsers(String userName, HttpServletRequest request) {
         //仅管理员可以查看用户列表
         if (!userService.isAdmin(request))
             throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
 
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-        if (StringUtils.isNotBlank(username)) {
-            userQueryWrapper.like("username", username);
+        if (StringUtils.isNotBlank(userName)) {
+            userQueryWrapper.like("userName", userName);
         }
         List<User> userList = userService.list(userQueryWrapper);
         List<User> list = userList.stream().map(user -> {

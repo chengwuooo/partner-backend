@@ -32,16 +32,16 @@ public class InsertUsers {
         final int INSERT_NUM = 9000;
         for (int i = 0; i < INSERT_NUM; i++) {
             User user =new User();
-            user.setUsername("是一个假数据");
+            user.setUserName("是一个假数据");
             user.setUserAccount("fakeUser");
-            user.setAvatarUrl("https://img2.baidu.com/it/u=2920879629,2349199079&fm=253&app=138&size=w931&n=0&f=JPEG&fmt=auto?sec=1714323600&t=b083b814efa1d2b690ec0bab177b1370");
-            user.setProfile("是一个假数据");
+            user.setUserAvatar("https://img2.baidu.com/it/u=2920879629,2349199079&fm=253&app=138&size=w931&n=0&f=JPEG&fmt=auto?sec=1714323600&t=b083b814efa1d2b690ec0bab177b1370");
+            user.setUserProfile("是一个假数据");
             user.setGender(nextInt(0, 2));
             user.setUserPassword("12345678");
             user.setPhone("123456789108");
             user.setEmail("fakeEmail@qq.com");
             user.setUserStatus(0);
-            user.setUserRole(0);
+            user.setUserRole("user");
             String[] tags={"咸鱼","吃瓜","搬砖","打工人","程序员","JAVA","C++","PYTHON","PHP"};
             //从tags数组中随机选取两个或者三个元素
 
