@@ -2,7 +2,6 @@ package com.fcw.partner.common;
 
 import lombok.Data;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -13,7 +12,7 @@ import java.io.Serializable;
 
 public class PageRequest implements Serializable {
 
-    @Serial
+
     private static final long serialVersionUID = -3981532167500043307L;
     /**
      * 页面大小

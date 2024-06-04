@@ -1,8 +1,6 @@
 package com.fcw.partner.model.request;
 
 import lombok.Data;
-
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
