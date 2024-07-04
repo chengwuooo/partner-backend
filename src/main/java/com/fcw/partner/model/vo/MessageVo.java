@@ -12,6 +12,11 @@ import java.io.Serializable;
 public class MessageVo implements Serializable {
     private static final long serialVersionUID = -336328171592225010L;
     private WebSocketVo fromUser;
-    private WebSocketVo consumer;
+    private WebSocketVo toUser;
+    private Long teamId;
     private String text;
+    private Integer chatType;
+    private Boolean isMy = false;
+    private Boolean isAdmin = false;
+    private String createTime;
 }

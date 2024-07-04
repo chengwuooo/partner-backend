@@ -13,5 +13,5 @@ public class MessageRequest implements Serializable {
     private Long fromId;
     private Long toId;
     private String text;
-    private Integer type;
+    private Integer messageType;
 }

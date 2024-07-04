@@ -39,7 +39,7 @@ public class Message {
     /**
      * 消息的类型，用于区分不同类型的消息，如文本、图片等。
      */
-    private Integer type;
+    private Integer messageType;
 
     /**
      * 消息的发送时间，格式化为"yyyy-MM-dd HH:mm:ss"。

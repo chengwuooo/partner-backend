@@ -29,8 +29,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.fcw.partner.contant.UserConstant.ADMIN_ROLE;
-import static com.fcw.partner.contant.UserConstant.USER_LOGIN_STATE;
+import static com.fcw.partner.constant.UserConstant.ADMIN_ROLE;
+import static com.fcw.partner.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * @author chengwu
