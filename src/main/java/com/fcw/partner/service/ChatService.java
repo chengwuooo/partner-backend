@@ -1,29 +1,29 @@
 package com.fcw.partner.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.fcw.partner.model.domain.Message;
+import com.fcw.partner.model.domain.Chat;
 import com.fcw.partner.model.domain.User;
-import com.fcw.partner.model.request.MessageRequest;
-import com.fcw.partner.model.vo.MessageVo;
+import com.fcw.partner.model.request.ChatRequest;
+import com.fcw.partner.model.vo.ChatVo;
 
 import java.util.Date;
 import java.util.List;
 
 /**
 * @author chengwu
-* @description 针对表【message(聊天消息表)】的数据库操作Service
+* @description 针对表【chat(聊天消息表)】的数据库操作Service
 * @createDate 2024-07-04 21:13:20
 */
-public interface MessageService extends IService<Message> {
+public interface ChatService extends IService<Chat> {
 
     /**
      * 保存消息到缓存中。
      *
      * @param redisKey 缓存的key。
      * @param id 与消息关联的唯一标识，如会话ID。
-     * @param messageVos 需要保存的消息列表。
+     * @param chatVos 需要保存的消息列表。
      */
-    void saveCache(String redisKey, String id, List<MessageVo> messageVos);
+    void saveCache(String redisKey, String id, List<ChatVo> chatVos);
 
     /**
      * 从缓存中获取指定key和id对应的消息列表。
@@ -32,7 +32,7 @@ public interface MessageService extends IService<Message> {
      * @param id 与消息关联的唯一标识，如会话ID。
      * @return 消息列表。
      */
-    List<MessageVo> getCache(String redisKey, String id);
+    List<ChatVo> getCache(String redisKey, String id);
 
     /**
      * 获取私聊消息记录。
@@ -42,7 +42,7 @@ public interface MessageService extends IService<Message> {
      * @param loginUser 当前登录用户的信息。
      * @return 私聊消息列表。
      */
-    List<MessageVo> getPrivateChat(MessageRequest chatRequest, int chatType, User loginUser);
+    List<ChatVo> getPrivateChat(ChatRequest chatRequest, int chatType, User loginUser);
 
     /**
      * 获取大厅聊天消息记录。
@@ -51,7 +51,7 @@ public interface MessageService extends IService<Message> {
      * @param loginUser 当前登录用户的信息。
      * @return 大厅聊天消息列表。
      */
-    List<MessageVo> getHallChat(int chatType, User loginUser);
+    List<ChatVo> getHallChat(int chatType, User loginUser);
 
     /**
      * 根据消息内容创建聊天结果对象。
@@ -63,7 +63,7 @@ public interface MessageService extends IService<Message> {
      * @param createTime 消息创建时间。
      * @return 聊天结果的VO对象。
      */
-    MessageVo chatResult(Long fromId, Long toId, String text, Integer chatType, Date createTime);
+    ChatVo getChatVo(Long fromId, Long toId, String text, Integer chatType, Date createTime);
 
     /**
      * 获取团队聊天消息记录。
@@ -73,7 +73,7 @@ public interface MessageService extends IService<Message> {
      * @param loginUser 当前登录用户的信息。
      * @return 团队聊天消息列表。
      */
-    List<MessageVo> getTeamChat(MessageRequest chatRequest, int chatType, User loginUser);
+    List<ChatVo> getTeamChat(ChatRequest chatRequest, int chatType, User loginUser);
 
     /**
      * 根据指定的key和id删除缓存中的消息数据。

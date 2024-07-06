@@ -24,7 +24,7 @@ public enum ErrorCode {
         return code;
     }
 
-    public String getMessage() {
+    public String getChat() {
         return message;
     }
 }

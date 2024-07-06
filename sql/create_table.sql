@@ -78,14 +78,14 @@ create index idx_userId
 
 
 -- auto-generated definition
-create table message
+create table chat
 (
     id          bigint auto_increment comment '聊天记录id'
         primary key,
     fromId      bigint                                  not null comment '发送消息id',
     toId        bigint                                  null comment '接收消息id',
     text        varchar(512) collate utf8mb4_unicode_ci null,
-    messageType tinyint                                 not null comment '聊天类型 1-私聊 2-群聊',
+    chatType tinyint                                 not null comment '聊天类型 1-私聊 2-群聊',
     date        datetime default CURRENT_TIMESTAMP      null comment '创建时间',
     isRead      int                                     null comment '是否被阅读',
     isDelete    int                                     null comment '是否被撤回'

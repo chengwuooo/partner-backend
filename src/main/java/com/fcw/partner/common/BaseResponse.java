@@ -43,12 +43,12 @@ public class BaseResponse<T> implements Serializable {
 
 
     public BaseResponse(ErrorCode errorCode) {
-        this(errorCode.getCode(), errorCode.getMessage(), "");
+        this(errorCode.getCode(), errorCode.getChat(), "");
     }
 
     public BaseResponse(ErrorCode errorCode , String description) {
         this.code = errorCode.getCode();
-        this.message = errorCode.getMessage();
+        this.message = errorCode.getChat();
         this.description = description;
     }
     public BaseResponse(ErrorCode errorCode ,String message, String description) {

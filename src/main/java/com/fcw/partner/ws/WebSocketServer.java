@@ -4,8 +4,8 @@ package com.fcw.partner.ws;
 import com.fcw.partner.common.ErrorCode;
 import com.fcw.partner.exception.BusinessException;
 import com.fcw.partner.model.domain.User;
-import com.fcw.partner.model.request.MessageRequest;
-import com.fcw.partner.model.vo.MessageVo;
+import com.fcw.partner.model.request.ChatRequest;
+import com.fcw.partner.model.vo.ChatVo;
 import com.fcw.partner.model.vo.WebSocketVo;
 import com.fcw.partner.service.UserService;
 import com.google.gson.Gson;
@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * &#064;Component  注解将这个类纳入到Spring的管理中，使其成为一个Bean。
  */
 @Slf4j
-@ServerEndpoint("/webSocket/{userId}")
+@ServerEndpoint("/webSocket/{userId}/{teamId}")
 @Component
 public class WebSocketServer {
     private static UserService userService;
@@ -56,6 +56,7 @@ public class WebSocketServer {
      */
     @OnOpen
     public synchronized void onOpen(Session session, @PathParam(value = "userId") String userId) {
+        System.err.println("userId = " + userId);
         if (StringUtils.isBlank(userId) || "undefined".equals(userId)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数有误");
         }
@@ -80,31 +81,31 @@ public class WebSocketServer {
     }
 
     @OnMessage
-    public void onMessage(String message, @PathParam("userId") String userId) {
-        if ("PING".equals(message)) {
-            sendAllMessage("pong");
+    public void onChat(String chat, @PathParam("userId") String userId) {
+        if ("PING".equals(chat)) {
+            sendAllChat("pong");
             return;
         }
-        log.info("服务端收到用户username={}的消息:{}", userId, message);
-        MessageRequest messageRequest = new Gson().fromJson(message, MessageRequest.class);
-        Long toId = messageRequest.getToId();
-        String text = messageRequest.getText();
+        log.info("服务端收到用户username={}的消息:{}", userId, chat);
+        ChatRequest chatRequest = new Gson().fromJson(chat, ChatRequest.class);
+        Long toId = chatRequest.getToId();
+        String text = chatRequest.getText();
 
         Session toSession = sessionPools.get(toId.toString());
         if (toSession != null) {
-            MessageVo messageVo = new MessageVo();
+            ChatVo chatVo = new ChatVo();
             User fromUser = userService.getById(userId);
             User toUser = userService.getById(toId);
             WebSocketVo fromWebSocketVo = new WebSocketVo();
             WebSocketVo toWebSocketVo = new WebSocketVo();
             BeanUtils.copyProperties(fromUser, fromWebSocketVo);
             BeanUtils.copyProperties(toUser, toWebSocketVo);
-            messageVo.setFromUser(fromWebSocketVo);
-            messageVo.setConsumer(toWebSocketVo);
-            messageVo.setText(text);
-            String toJson = new Gson().toJson(messageVo);
-            sendOneMessage(toId.toString(), toJson);
-            log.info("发送给用户username={}，消息：{}", messageVo.getConsumer(), toJson);
+            chatVo.setFromUser(fromWebSocketVo);
+            chatVo.setToUser(toWebSocketVo);
+            chatVo.setText(text);
+            String toJson = new Gson().toJson(chatVo);
+            sendOneChat(toId.toString(), toJson);
+            log.info("发送给用户username={}，消息：{}", chatVo.getToUser(), toJson);
         } else {
             log.info("发送失败，未找到用户username={}的session", toId);
         }
@@ -113,16 +114,16 @@ public class WebSocketServer {
     /**
      * 此为广播消息
      *
-     * @param message 消息
+     * @param chat 消息
      */
-    public void sendAllMessage(String message) {
-        log.info("【WebSocket消息】广播消息：" + message);
+    public void sendAllChat(String chat) {
+        log.info("【WebSocket消息】广播消息：" + chat);
 
         for (Session session : sessionPools.values()) {
             try {
                 if (session.isOpen()) {
                     synchronized (session) {
-                        session.getBasicRemote().sendText(message);
+                        session.getBasicRemote().sendText(chat);
                     }
                 }
             } catch (Exception e) {
@@ -135,15 +136,15 @@ public class WebSocketServer {
      * 此为单点消息
      *
      * @param userId  用户编号
-     * @param message 消息
+     * @param chat 消息
      */
-    public void sendOneMessage(String userId, String message) {
+    public void sendOneChat(String userId, String chat) {
         Session session = sessionPools.get(userId);
         if (session != null && session.isOpen()) {
             try {
                 synchronized (session) {
-                    log.info("【WebSocket消息】单点消息：" + message);
-                    session.getAsyncRemote().sendText(message);
+                    log.info("【WebSocket消息】单点消息：" + chat);
+                    session.getAsyncRemote().sendText(chat);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -165,7 +166,7 @@ public class WebSocketServer {
             BeanUtils.copyProperties(user, webSocketVo);
             webSocketVos.add(webSocketVo);
         }
-        sendAllMessage(new Gson().toJson(stringListHashMap));
+        sendAllChat(new Gson().toJson(stringListHashMap));
     }
 }
 

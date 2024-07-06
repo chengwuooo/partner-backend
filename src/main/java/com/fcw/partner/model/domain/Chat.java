@@ -1,9 +1,7 @@
 package com.fcw.partner.model.domain;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.util.Date;
@@ -13,8 +11,9 @@ import java.util.Date;
  * @createDate 2024-07-03
  * @description 聊天消息类，用于表示聊天应用中的消息实体。
  */
+@TableName(value ="message")
 @Data
-public class Message {
+public class Chat {
     /**
      * 消息主键ID，由数据库自动生成。
      */
@@ -39,7 +38,8 @@ public class Message {
     /**
      * 消息的类型，用于区分不同类型的消息，如文本、图片等。
      */
-    private Integer messageType;
+    @TableField(value ="messageType")
+    private Integer chatType;
 
     /**
      * 消息的发送时间，格式化为"yyyy-MM-dd HH:mm:ss"。
