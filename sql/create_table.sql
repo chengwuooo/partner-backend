@@ -1,27 +1,27 @@
 create
-database if not exists partner;
+    database if not exists partner;
 
 use
-partner;
+    partner;
 
 -- 用户表
 create table user
 (
-    userName     varchar(256) null comment '用户昵称',
+    userName     varchar(256)                       null comment '用户昵称',
     id           bigint auto_increment comment 'id'
         primary key,
-    userAccount  varchar(256) null comment '账号',
-    userAvatar    varchar(1024) null comment '用户头像',
-    gender       tinyint null comment '性别',
-    userPassword varchar(512)       not null comment '密码',
-    phone        varchar(128) null comment '电话',
-    email        varchar(512) null comment '邮箱',
-    userStatus   int      default 0 not null comment '状态 0 - 正常',
+    userAccount  varchar(256)                       null comment '账号',
+    userAvatar   varchar(1024)                      null comment '用户头像',
+    gender       tinyint                            null comment '性别',
+    userPassword varchar(512)                       not null comment '密码',
+    phone        varchar(128)                       null comment '电话',
+    email        varchar(512)                       null comment '邮箱',
+    userStatus   int      default 0                 not null comment '状态 0 - 正常',
     createTime   datetime default CURRENT_TIMESTAMP null comment '创建时间',
     updateTime   datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
-    isDelete     tinyint  default 0 not null comment '是否删除',
-    userRole     int      default 0 not null comment '用户角色 0 - 普通用户 1 - 管理员',
-    tags         varchar(1024) null comment '标签 json 列表'
+    isDelete     tinyint  default 0                 not null comment '是否删除',
+    userRole     int      default 0                 not null comment '用户角色 0 - 普通用户 1 - 管理员',
+    tags         varchar(1024)                      null comment '标签 json 列表'
 ) comment '用户';
 
 -- 队伍表
@@ -50,10 +50,10 @@ create table user_team
         primary key,
     userId     bigint comment '用户id',
     teamId     bigint comment '队伍id',
-    joinTime   datetime null comment '加入时间',
+    joinTime   datetime                           null comment '加入时间',
     createTime datetime default CURRENT_TIMESTAMP null comment '创建时间',
     updateTime datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
-    isDelete   tinyint  default 0 not null comment '是否删除'
+    isDelete   tinyint  default 0                 not null comment '是否删除'
 ) comment '用户队伍关系';
 
 
@@ -62,13 +62,13 @@ create table tag
 (
     id         bigint auto_increment comment 'id'
         primary key,
-    tagName    varchar(256) null comment '标签名称',
-    userId     bigint null comment '用户 id',
-    parentId   bigint null comment '父标签 id',
-    isParent   tinyint null comment '0 - 不是, 1 - 父标签',
+    tagName    varchar(256)                       null comment '标签名称',
+    userId     bigint                             null comment '用户 id',
+    parentId   bigint                             null comment '父标签 id',
+    isParent   tinyint                            null comment '0 - 不是, 1 - 父标签',
     createTime datetime default CURRENT_TIMESTAMP null comment '创建时间',
     updateTime datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
-    isDelete   tinyint  default 0 not null comment '是否删除',
+    isDelete   tinyint  default 0                 not null comment '是否删除',
     constraint uniIdx_tagName
         unique (tagName)
 ) comment '标签';
@@ -80,17 +80,38 @@ create index idx_userId
 -- auto-generated definition
 create table message
 (
-    id          bigint auto_increment comment '聊天记录id'
+    id       bigint auto_increment comment '聊天记录id'
         primary key,
-    fromId      bigint                                  not null comment '发送消息id',
-    toId        bigint                                  null comment '接收消息id',
-    text        varchar(512) collate utf8mb4_unicode_ci null,
+    fromId   bigint                                  not null comment '发送消息id',
+    toId     bigint                                  null comment '接收消息id',
+    text     varchar(512) collate utf8mb4_unicode_ci null,
     chatType tinyint                                 not null comment '聊天类型 1-私聊 2-群聊',
-    date        datetime default CURRENT_TIMESTAMP      null comment '创建时间',
-    isRead      int                                     null comment '是否被阅读',
-    isDelete    int                                     null comment '是否被撤回'
+    date     datetime default CURRENT_TIMESTAMP      null comment '创建时间',
+    isRead   int                                     null comment '是否被阅读',
+    isDelete int                                     null comment '是否被撤回'
 )
     comment '聊天消息表';
+
+
+-- auto-generated definition
+create table follows
+(
+    id          bigint unsigned auto_increment
+        primary key,
+    user_id     bigint unsigned                      not null comment '关注者用户ID',
+    followed_id bigint unsigned                      not null comment '被关注者用户ID',
+    created_at  timestamp  default CURRENT_TIMESTAMP not null comment '关注时间',
+    is_active   tinyint(1) default 1                 not null comment '关注状态,0表示取消关注,1表示正在关注',
+    constraint uk_user_followed
+        unique (user_id, followed_id)
+)
+    comment '关注表' charset = utf8mb4;
+
+create index idx_followed_id
+    on follows (followed_id);
+
+create index idx_user_id
+    on follows (user_id);
 
 
 

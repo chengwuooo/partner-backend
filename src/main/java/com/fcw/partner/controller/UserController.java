@@ -9,6 +9,7 @@ import com.fcw.partner.exception.BusinessException;
 import com.fcw.partner.model.domain.User;
 import com.fcw.partner.model.request.UserLoginRequest;
 import com.fcw.partner.model.request.UserRegisterRequest;
+import com.fcw.partner.service.FollowsService;
 import com.fcw.partner.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +38,9 @@ import static com.fcw.partner.constant.UserConstant.USER_LOGIN_STATE;
 public class UserController {
     @Resource
     private UserService userService;
+
+    @Resource
+    private FollowsService followsService;
 
     @Resource
     private RedisTemplate<String, Serializable> redisTemplate;
@@ -191,5 +195,38 @@ public class UserController {
             log.error("缓存失败", e);
         }
         return ResultUtils.success(userList);
+    }
+
+    @PostMapping("follow")
+    public BaseResponse<Boolean> followUser(@RequestParam("followId") Long followId, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser == null)
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        if (followId == null || followId <= 0)
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
+        boolean b = followsService.followUser(loginUser.getId(), followId);
+        return ResultUtils.success(b);
+    }
+
+    @PostMapping("unfollow")
+    public BaseResponse<Boolean> unfollowUser(@RequestParam Long followId, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser == null)
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        if (followId == null || followId <= 0)
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
+        boolean b = followsService.unfollowUser(loginUser.getId(), followId);
+        return ResultUtils.success(b);
+    }
+
+    @GetMapping("isFollow")
+    public BaseResponse<Boolean> isFollow(@RequestParam Long followId, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser == null)
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        if (followId == null || followId <= 0)
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
+        boolean b = followsService.isFollow(loginUser.getId(), followId);
+        return ResultUtils.success(b);
     }
 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fcw.partner.mapper.FollowsMapper">
+
+    <resultMap id="BaseResultMap" type="com.fcw.partner.model.domain.Follows">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="user_id" column="user_id" jdbcType="BIGINT"/>
+            <result property="followed_id" column="followed_id" jdbcType="BIGINT"/>
+            <result property="created_at" column="created_at" jdbcType="TIMESTAMP"/>
+            <result property="is_active" column="is_active" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_id,followed_id,
+        created_at,is_active
+    </sql>
+</mapper>
