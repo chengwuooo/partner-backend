@@ -23,6 +23,7 @@ public class Team implements Serializable {
     /**
      * 队伍名称
      */
+    @TableField(value = "teamName")
     private String name;
 
     /**

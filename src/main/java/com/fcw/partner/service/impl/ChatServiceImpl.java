@@ -7,11 +7,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fcw.partner.common.ErrorCode;
 import com.fcw.partner.exception.BusinessException;
-import com.fcw.partner.model.domain.Chat;
+import com.fcw.partner.model.domain.Message;
 import com.fcw.partner.model.domain.Team;
 import com.fcw.partner.model.domain.User;
 import com.fcw.partner.model.request.ChatRequest;
-import com.fcw.partner.model.vo.ChatVo;
+import com.fcw.partner.model.vo.MessageVo;
 import com.fcw.partner.model.vo.WebSocketVo;
 import com.fcw.partner.service.ChatService;
 import com.fcw.partner.mapper.ChatMapper;
@@ -37,11 +37,11 @@ import static com.fcw.partner.constant.UserConstant.ADMIN_ROLE;
  * @createDate 2024-07-04 21:13:20
  */
 @Service
-public class ChatServiceImpl extends ServiceImpl<ChatMapper, Chat>
+public class ChatServiceImpl extends ServiceImpl<ChatMapper, Message>
         implements ChatService {
 
     @Resource
-    private RedisTemplate<String, List<ChatVo>> redisTemplate;
+    private RedisTemplate<String, List<MessageVo>> redisTemplate;
 
     @Resource
     private UserService userService;
@@ -58,45 +58,44 @@ public class ChatServiceImpl extends ServiceImpl<ChatMapper, Chat>
      * @return 私聊消息列表。
      */
     @Override
-    public List<ChatVo> getPrivateChat(ChatRequest chatRequest, int chatType, User loginUser) {
+    public List<MessageVo> getPrivateChat(ChatRequest chatRequest, int chatType, User loginUser) {
         Long fromId = chatRequest.getFromId();
         Long toId = chatRequest.getToId();
         if (fromId == null || toId == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "发送者ID和接收者ID不能为空");
         }
-
         //查看消息有没有缓存
-        List<ChatVo> chatVos = getCache(CHAT_PRIVATE, fromId + "-" + toId);
-        if (chatVos != null && !chatVos.isEmpty()) {
-            return chatVos;
+        List<MessageVo> messageVos = getCache(CHAT_PRIVATE, fromId + "-" + toId);
+        if (messageVos != null && !messageVos.isEmpty()) {
+            return messageVos;
         }
 
-        final LambdaQueryWrapper<Chat> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        final LambdaQueryWrapper<Message> lambdaQueryWrapper = new LambdaQueryWrapper<>();
 
         lambdaQueryWrapper
                 .and(wrapper -> wrapper
-                        .eq(Chat::getFromId, fromId).eq(Chat::getToId, toId)
+                        .eq(Message::getFromId, fromId).eq(Message::getToId, toId)
                         .or()
-                        .eq(Chat::getFromId, toId).eq(Chat::getToId, fromId))
-                .eq(Chat::getIsDelete, 0)
-                .eq(Chat::getChatType, chatType)
-                .orderByAsc(Chat::getDate);
+                        .eq(Message::getFromId, toId).eq(Message::getToId, fromId))
+                .eq(Message::getIsDelete, 0)
+                .eq(Message::getChatType, chatType)
+                .orderByAsc(Message::getDate);
 
-        List<Chat> list = this.list(lambdaQueryWrapper);
+        List<Message> list = this.list(lambdaQueryWrapper);
 
-        final List<ChatVo> chatVoList = list.stream().map(chat -> {
+        final List<MessageVo> messageVoList = list.stream().map(chat -> {
             String text = chat.getText();
             Date date = chat.getDate();
-            ChatVo chatVo = getChatVo(fromId, toId, text, chatType, date);
-            if (loginUser.getId().equals(chat.getFromId()) || loginUser.getId().equals(chat.getToId())) {
-                chatVo.setIsMy(true);
+            MessageVo messageVo = getChatVo(fromId, toId, text, chatType, date);
+            if (loginUser.getId().equals(chat.getFromId()) ) {
+                messageVo.setIsMy(true);
             }
-            return chatVo;
+            return messageVo;
         }).collect(Collectors.toList());
 
-        saveCache(CHAT_PRIVATE, fromId + "-" + toId, chatVoList);
+        saveCache(CHAT_PRIVATE, fromId + "-" + toId, messageVoList);
 
-        return chatVoList;
+        return messageVoList;
     }
 
     /**
@@ -107,18 +106,18 @@ public class ChatServiceImpl extends ServiceImpl<ChatMapper, Chat>
      * @return 大厅聊天消息列表。
      */
     @Override
-    public List<ChatVo> getHallChat(int chatType, User loginUser) {
-        List<ChatVo> chatRecords = getCache(CHAT_HALL, String.valueOf(loginUser.getId()));
+    public List<MessageVo> getHallChat(int chatType, User loginUser) {
+        List<MessageVo> chatRecords = getCache(CHAT_HALL, String.valueOf(loginUser.getId()));
         if (chatRecords != null) {
-            List<ChatVo> chatVos = checkIsMyChat(loginUser, chatRecords);
-            saveCache(CHAT_HALL, String.valueOf(loginUser.getId()), chatVos);
-            return chatVos;
+            List<MessageVo> messageVos = checkIsMyChat(loginUser, chatRecords);
+            saveCache(CHAT_HALL, String.valueOf(loginUser.getId()), messageVos);
+            return messageVos;
         }
-        LambdaQueryWrapper<Chat> chatLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        chatLambdaQueryWrapper.eq(Chat::getChatType, chatType);
-        List<ChatVo> chatVos = returnChat(loginUser, null, chatLambdaQueryWrapper);
-        saveCache(CHAT_HALL, String.valueOf(loginUser.getId()), chatVos);
-        return chatVos;
+        LambdaQueryWrapper<Message> chatLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        chatLambdaQueryWrapper.eq(Message::getChatType, chatType);
+        List<MessageVo> messageVos = returnChat(loginUser, null, chatLambdaQueryWrapper);
+        saveCache(CHAT_HALL, String.valueOf(loginUser.getId()), messageVos);
+        return messageVos;
     }
 
     /**
@@ -130,29 +129,29 @@ public class ChatServiceImpl extends ServiceImpl<ChatMapper, Chat>
      * @return 团队聊天消息列表。
      */
     @Override
-    public List<ChatVo> getTeamChat(ChatRequest chatRequest, int chatType, User loginUser) {
+    public List<MessageVo> getTeamChat(ChatRequest chatRequest, int chatType, User loginUser) {
         Long teamId = chatRequest.getToId();
         if (teamId == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求有误");
         }
-        List<ChatVo> chatRecords = getCache(CHAT_TEAM, String.valueOf(teamId));
+        List<MessageVo> chatRecords = getCache(CHAT_TEAM, String.valueOf(teamId));
         if (chatRecords != null) {
-            List<ChatVo> chatVos = checkIsMyChat(loginUser, chatRecords);
-            saveCache(CHAT_TEAM, String.valueOf(teamId), chatVos);
-            return chatVos;
+            List<MessageVo> messageVos = checkIsMyChat(loginUser, chatRecords);
+            saveCache(CHAT_TEAM, String.valueOf(teamId), messageVos);
+            return messageVos;
         }
         Team team = teamService.getById(teamId);
-        LambdaQueryWrapper<Chat> chatLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        LambdaQueryWrapper<Message> chatLambdaQueryWrapper = new LambdaQueryWrapper<>();
         chatLambdaQueryWrapper
-                .eq(Chat::getChatType, chatType)
-                .eq(Chat::getToId, teamId);
-        List<ChatVo> chatVos = returnChat(loginUser, team.getUserId(), chatLambdaQueryWrapper);
-        saveCache(CHAT_TEAM, String.valueOf(teamId), chatVos);
-        return chatVos;
+                .eq(Message::getChatType, chatType)
+                .eq(Message::getToId, teamId);
+        List<MessageVo> messageVos = returnChat(loginUser, team.getUserId(), chatLambdaQueryWrapper);
+        saveCache(CHAT_TEAM, String.valueOf(teamId), messageVos);
+        return messageVos;
     }
 
 
-    private List<ChatVo> checkIsMyChat(User loginUser, List<ChatVo> chatRecords) {
+    private List<MessageVo> checkIsMyChat(User loginUser, List<MessageVo> chatRecords) {
         return chatRecords.stream().peek(chat -> {
             if (!chat.getFromUser().getId().equals(loginUser.getId()) && chat.getIsMy()) {
                 chat.setIsMy(false);
@@ -164,20 +163,20 @@ public class ChatServiceImpl extends ServiceImpl<ChatMapper, Chat>
     }
 
 
-    private List<ChatVo> returnChat(User loginUser, Long userId, LambdaQueryWrapper<Chat> chatLambdaQueryWrapper) {
-        List<Chat> chatList = this.list(chatLambdaQueryWrapper);
-        return chatList.stream().map(chat -> {
-            ChatVo chatVo = getChatVo(chat.getFromId(), chat.getText());
+    private List<MessageVo> returnChat(User loginUser, Long userId, LambdaQueryWrapper<Message> chatLambdaQueryWrapper) {
+        List<Message> messageList = this.list(chatLambdaQueryWrapper);
+        return messageList.stream().map(chat -> {
+            MessageVo messageVo = getChatVo(chat.getFromId(), chat.getText());
             boolean isCaptain = userId != null && userId.equals(chat.getFromId());
             if (userService.getById(chat.getFromId()).getUserRole().equals(ADMIN_ROLE) || isCaptain) {
-                chatVo.setIsAdmin(true);
+                messageVo.setIsAdmin(true);
             }
             if (chat.getFromId().equals(loginUser.getId())) {
-                chatVo.setIsMy(true);
+                messageVo.setIsMy(true);
             }
-            chatVo.setChatType(chat.getChatType());
-            chatVo.setCreateTime(DateUtil.format(chat.getDate(), "yyyy年MM月dd日 HH:mm:ss"));
-            return chatVo;
+            messageVo.setChatType(chat.getChatType());
+            messageVo.setCreateTime(DateUtil.format(chat.getDate(), "yyyy年MM月dd日 HH:mm:ss"));
+            return messageVo;
         }).collect(Collectors.toList());
     }
 
@@ -187,33 +186,33 @@ public class ChatServiceImpl extends ServiceImpl<ChatMapper, Chat>
      * @return 聊天结果的VO对象。
      */
     @Override
-    public ChatVo getChatVo(Long fromId, Long toId, String text, Integer chatType, Date createTime) {
-        ChatVo chatVo = new ChatVo();
+    public MessageVo getChatVo(Long fromId, Long toId, String text, Integer chatType, Date createTime) {
+        MessageVo messageVo = new MessageVo();
         User fromUser = userService.getById(fromId);
         User toUser = userService.getById(toId);
         WebSocketVo fromWebSocketVo = new WebSocketVo();
         WebSocketVo toWebSocketVo = new WebSocketVo();
         BeanUtils.copyProperties(fromUser, fromWebSocketVo);
         BeanUtils.copyProperties(toUser, toWebSocketVo);
-        chatVo.setFromUser(fromWebSocketVo);
-        chatVo.setToUser(toWebSocketVo);
-        chatVo.setChatType(chatType);
-        chatVo.setText(text);
-        chatVo.setCreateTime(DateUtil.format(createTime, "yyyy年MM月dd日 HH:mm:ss"));
-        return chatVo;
+        messageVo.setFromUser(fromWebSocketVo);
+        messageVo.setToUser(toWebSocketVo);
+        messageVo.setChatType(chatType);
+        messageVo.setText(text);
+        messageVo.setCreateTime(DateUtil.format(createTime, "yyyy年MM月dd日 HH:mm:ss"));
+        return messageVo;
     }
 
     /**
      * Vo映射
      */
-    public ChatVo getChatVo(Long userId, String text) {
-        ChatVo chatVo = new ChatVo();
+    public MessageVo getChatVo(Long userId, String text) {
+        MessageVo messageVo = new MessageVo();
         User fromUser = userService.getById(userId);
         WebSocketVo fromWebSocketVo = new WebSocketVo();
         BeanUtils.copyProperties(fromUser, fromWebSocketVo);
-        chatVo.setFromUser(fromWebSocketVo);
-        chatVo.setText(text);
-        return chatVo;
+        messageVo.setFromUser(fromWebSocketVo);
+        messageVo.setText(text);
+        return messageVo;
     }
 
     /**
@@ -221,12 +220,12 @@ public class ChatServiceImpl extends ServiceImpl<ChatMapper, Chat>
      *
      * @param redisKey   缓存的key。
      * @param id         与消息关联的唯一标识，如会话ID。
-     * @param chatVos 需要保存的消息列表。
+     * @param messageVos 需要保存的消息列表。
      */
     @Override
-    public void saveCache(String redisKey, String id, List<ChatVo> chatVos) {
+    public void saveCache(String redisKey, String id, List<MessageVo> messageVos) {
         try {
-            ValueOperations<String, List<ChatVo>> valueOperations = redisTemplate.opsForValue();
+            ValueOperations<String, List<MessageVo>> valueOperations = redisTemplate.opsForValue();
 
             // 基础过期时间（2分钟）
             long baseExpireTime = 2L;
@@ -237,10 +236,10 @@ public class ChatServiceImpl extends ServiceImpl<ChatMapper, Chat>
 
             if (redisKey.equals(CHAT_HALL)) {
                 // todo:对于公共聊天室，可以考虑更短的基础过期时间以加快信息流动
-                valueOperations.set(redisKey, chatVos, 10, TimeUnit.SECONDS);
+                valueOperations.set(redisKey, messageVos, 10, TimeUnit.SECONDS);
             } else {
                 // todo:私人聊天可以根据实际情况调整过期时间策略
-                valueOperations.set(redisKey + id, chatVos, expireTime, TimeUnit.SECONDS);
+                valueOperations.set(redisKey + id, messageVos, 10, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             log.error("redis set key error", e);
@@ -255,9 +254,9 @@ public class ChatServiceImpl extends ServiceImpl<ChatMapper, Chat>
      * @return 消息列表。
      */
     @Override
-    public List<ChatVo> getCache(String redisKey, String id) {
-        ValueOperations<String, List<ChatVo>> valueOperations = redisTemplate.opsForValue();
-        List<ChatVo> chatRecords;
+    public List<MessageVo> getCache(String redisKey, String id) {
+        ValueOperations<String, List<MessageVo>> valueOperations = redisTemplate.opsForValue();
+        List<MessageVo> chatRecords;
         if (redisKey.equals(CHAT_HALL)) {
             chatRecords = valueOperations.get(redisKey);
         } else {

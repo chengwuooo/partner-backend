@@ -13,7 +13,7 @@ import java.util.Date;
  */
 @TableName(value ="message")
 @Data
-public class Chat {
+public class Message {
     /**
      * 消息主键ID，由数据库自动生成。
      */

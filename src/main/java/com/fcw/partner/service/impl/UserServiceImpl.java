@@ -49,9 +49,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private static final String salt = "fcw";
 
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(String userName,String userAccount, String userPassword, String checkPassword) {
         //1.校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+        if (StringUtils.isAnyBlank(userName,userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数不能为空");
         }
         if (userAccount.length() < 3) {
@@ -88,6 +88,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         //3.保存到数据库
         User user = new User();
+        user.setUserName(userName);
         user.setUserAccount(userAccount);
         user.setUserPassword(newPassword);
 //        boolean saveResult = this.save(user);

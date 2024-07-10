@@ -78,7 +78,7 @@ create index idx_userId
 
 
 -- auto-generated definition
-create table chat
+create table message
 (
     id          bigint auto_increment comment '聊天记录id'
         primary key,
