@@ -2,6 +2,10 @@ package com.fcw.partner.mapper;
 
 import com.fcw.partner.model.domain.Follows;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.fcw.partner.model.domain.User;
+import io.lettuce.core.dynamic.annotation.Param;
+
+import java.util.List;
 
 /**
 * @author chengwu
@@ -10,7 +14,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @Entity com.fcw.partner.model.domain.Follows
 */
 public interface FollowsMapper extends BaseMapper<Follows> {
-
+    List<User> listMutualFollowUsers(@Param("loginUserId") long loginUserId, @Param("isActive") boolean isActive);
 }
 
 

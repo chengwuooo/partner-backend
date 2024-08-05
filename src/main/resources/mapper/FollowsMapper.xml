@@ -16,4 +16,13 @@
         id,user_id,followed_id,
         created_at,is_active
     </sql>
+    <select id="listMutualFollowUsers" resultType="com.fcw.partner.model.domain.User">
+        SELECT u.*
+        FROM follows f1
+                 INNER JOIN follows f2 ON f1.followed_id = f2.user_id AND f2.followed_id = f1.user_id
+                 INNER JOIN user u ON f1.followed_id = u.id
+        WHERE f1.user_id = #{loginUserId} AND f1.is_active = #{isActive} AND f2.is_active = #{isActive}
+    </select>
+
+
 </mapper>

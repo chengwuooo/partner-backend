@@ -9,11 +9,17 @@ import com.fcw.partner.model.domain.Follows;
 import com.fcw.partner.model.domain.User;
 import com.fcw.partner.service.FollowsService;
 import com.fcw.partner.mapper.FollowsMapper;
-import org.apache.commons.lang3.StringUtils;
+import com.fcw.partner.service.UserService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.fcw.partner.constant.FollowConstant.IS_ACTIVE;
 
 /**
  * @author chengwu
@@ -28,6 +34,9 @@ public class FollowsServiceImpl extends ServiceImpl<FollowsMapper, Follows>
 
     @Resource
     private FollowsMapper followsMapper;
+
+    @Resource
+    private UserService userService;
 
     @Override
     public boolean followUser(Long userId, Long followId) {
@@ -130,6 +139,63 @@ public class FollowsServiceImpl extends ServiceImpl<FollowsMapper, Follows>
         }
         return follows.getIs_active() == 1;
     }
+
+    /**
+     * 获取关注列表
+     *
+     * @param loginUser 登录用户
+     * @return
+     */
+    @Override
+    public List<User> listFollows(User loginUser) {
+        long loginUserID = loginUser.getId();
+
+        LambdaQueryWrapper<Follows> listFollowsQueryWrapper = new LambdaQueryWrapper<>();
+
+        listFollowsQueryWrapper.eq(Follows::getUser_id, loginUserID)
+                .eq(Follows::getIs_active, IS_ACTIVE);
+        List<Follows> followsList = followsMapper.selectList(listFollowsQueryWrapper);
+
+        List<Long> listUserIds = followsList.stream().map(Follows::getFollowed_id).collect(Collectors.toList());
+
+        return userService.listUsersByIds(new ArrayList<>(listUserIds));
+    }
+
+    /**
+     * 获取互相关注列表
+     *
+     * @param loginUser 登录用户
+     * @return
+     */
+    @Override
+    public List<User> listMutualFollows(User loginUser) {
+        long loginUserId = loginUser.getId();
+
+        List<User> userList = followsMapper.listMutualFollowUsers(loginUserId, true);
+
+        return userList.stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
+    }
+
+    /**
+     * @param loginUser 登录用户
+     */
+    @Override
+    public List<User> listFans(User loginUser) {
+        long loginUserId = loginUser.getId();
+
+        // 1. 查询关注登录用户的用户ID列表
+        LambdaQueryWrapper<Follows> listFansQueryWrapper = new LambdaQueryWrapper<>();
+        listFansQueryWrapper.eq(Follows::getFollowed_id, loginUserId)
+                .eq(Follows::getIs_active, IS_ACTIVE);
+        List<Follows> loginUserFansList = followsMapper.selectList(listFansQueryWrapper);
+        List<Long> loginUserFanIds = loginUserFansList.stream()
+                .map(Follows::getUser_id)
+                .collect(Collectors.toList());
+
+        // 2. 根据用户ID列表查询用户信息
+        return userService.listUsersByIds(new ArrayList<>(loginUserFanIds));
+    }
+
 }
 
 

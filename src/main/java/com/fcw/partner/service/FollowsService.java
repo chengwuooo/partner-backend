@@ -2,6 +2,9 @@ package com.fcw.partner.service;
 
 import com.fcw.partner.model.domain.Follows;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.fcw.partner.model.domain.User;
+
+import java.util.List;
 
 /**
 * @author chengwu
@@ -21,4 +24,24 @@ public interface FollowsService extends IService<Follows> {
     boolean unfollowUser(Long userId, Long followId);
 
     boolean isFollow(Long id, Long followId);
+
+    /**
+     * 获取关注列表
+     * @param loginUser 登录用户
+     * @return
+     */
+    List<User> listFollows(User loginUser);
+
+    /**
+     * 获取互相关注列表
+     * @param loginUser 登录用户
+     * @return
+     */
+    List<User> listMutualFollows(User loginUser);
+
+    /**
+     *
+     * @param loginUser 登录用户
+     */
+    List<User> listFans(User loginUser);
 }
