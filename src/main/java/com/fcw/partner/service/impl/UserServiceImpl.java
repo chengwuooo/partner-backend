@@ -1,10 +1,12 @@
 package com.fcw.partner.service.impl;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fcw.partner.common.ErrorCode;
+import com.fcw.partner.common.ResultUtils;
 import com.fcw.partner.exception.BusinessException;
 import com.fcw.partner.mapper.UserMapper;
 import com.fcw.partner.model.domain.User;
@@ -21,10 +23,7 @@ import org.springframework.util.DigestUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -360,26 +359,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }.getType());
 
         // 计算当前用户与所有其他用户的标签相似度，并保存用户及其相似度
-        List<Pair<User, Long>> list = new ArrayList<>();
+        PriorityQueue<Pair<User, Long>> maxHeap = new PriorityQueue<>(
+                (a, b) -> Long.compare(b.getValue(), a.getValue()) // 反转比较，选取值大的
+        );
+
         for (User user : userList) {
             String userTags = user.getTags();
             // 跳过没有标签或为当前用户的记录
             if (StringUtils.isBlank(userTags) || Objects.equals(user.getId(), loginUser.getId())) {
                 continue;
             }
-            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
-            }.getType());
-//            System.out.println("tagList"+tagList+"userTagList:"+userTagList);
+
+            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>(){}.getType());
+
             // 计算标签编辑距离，作为相似度
             long distance = AlgorithmUtils.minDistance(tagList, userTagList);
-            list.add(new Pair<>(user, distance));
+            maxHeap.offer(new Pair<>(user, distance));
+
+            // 保持优先队列的大小为 num
+            if (maxHeap.size() > num) {
+                maxHeap.poll(); // 移除相似度最低的元素
+            }
         }
 
-        // 根据相似度对用户进行排序，并选取前num个
-        List<Pair<User, Long>> topUserPairList = list.stream()
-                .sorted((a, b) -> (int) (a.getValue() - b.getValue()))
-                .limit(num)
-                .collect(Collectors.toList());
+        // 将优先队列中的元素转换为列表
+        List<Pair<User, Long>> topUserPairList = new ArrayList<>(maxHeap);
+
 
         // 获取排序后的用户ID列表，用于后续查询完整的用户信息
         List<Long> userIdList = topUserPairList.stream().map(pair -> pair.getKey().getId()).collect(Collectors.toList());
@@ -399,6 +404,37 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         return finalUserList;
     }
+
+    @Override
+    public int updateUserTags(User loginUser, List<String> tagNameList) {
+        //1.校验
+        if (loginUser == null || CollectionUtils.isEmpty(tagNameList)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //2.更新用户标签
+        loginUser.setTags(new Gson().toJson(tagNameList));
+        //3.保存到数据库
+        final int result = userMapper.updateById(loginUser);
+        return result;
+    }
+
+    /**
+     * 根据 id 列表查询用户
+     * @param ids 用户 ID 列表
+     * @return 用户列表
+     */
+    @Override
+    public List<User> listUsersByIds(List<Long> ids) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+
+        queryWrapper.in(User::getId, ids);
+
+        List<User> users = userMapper.selectList(queryWrapper);
+
+        return  users.stream().map(this::getSafetyUser).collect(Collectors.toList());
+    }
+
+
 }
 
 

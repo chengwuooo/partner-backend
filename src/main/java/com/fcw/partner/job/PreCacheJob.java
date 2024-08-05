@@ -26,34 +26,31 @@ public class PreCacheJob {
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
     private RedissonClient redissonClient;
-    // 重点用户
-    private final List<Long> mainUserList = Collections.singletonList(1L);
 
-    // 每天执行，预热推荐用户
-    @Scheduled(cron = "0 33 18 * * *")   //自己设置时间测试
+
+    @Scheduled(fixedRate = 30000)
     public void doCacheRecommendUser() {
         RLock lock = redissonClient.getLock("partner:preCacheJob:doCache:lock");
         try {
-            if (lock.tryLock(0, 300000, TimeUnit.MILLISECONDS)) {
-                System.out.println("获取到锁"+Thread.currentThread().getId());
+            if (lock.tryLock(0, -1, TimeUnit.SECONDS)) {
+                System.out.println("获取到预热锁" + Thread.currentThread().getId());
                 //查数据库
-                for (Long mainUser : mainUserList) {
-                    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-                    Page<User> userPage = userService.page(new Page<>(1, 100), queryWrapper);
-                    String redisKey = String.format("partner:recommendUsers:%s", mainUser);
-                    ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-                    //写缓存,30s过期
-                    try {
-                        valueOperations.set(redisKey, userPage, 300000, TimeUnit.MILLISECONDS);
-                    } catch (Exception e) {
-                        log.error("redis set key error", e);
-                    }
+                QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+                Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
+                String redisKey = String.format("partner:recommendUsers:101");
+                ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+                //写缓存,30s过期
+                try {
+                    valueOperations.set(redisKey, userPage, 30, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    log.error("redis set key error", e);
                 }
+
             }
         } catch (InterruptedException e) {
             log.error("get lock error", e);
-        }finally {
-            System.out.println("释放锁"+Thread.currentThread().getId());
+        } finally {
+            System.out.println("释放锁" + Thread.currentThread().getId());
             //只能释放自己的锁
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();

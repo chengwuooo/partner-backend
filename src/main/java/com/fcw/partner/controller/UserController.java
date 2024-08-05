@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -38,9 +39,6 @@ import static com.fcw.partner.constant.UserConstant.USER_LOGIN_STATE;
 public class UserController {
     @Resource
     private UserService userService;
-
-    @Resource
-    private FollowsService followsService;
 
     @Resource
     private RedisTemplate<String, Serializable> redisTemplate;
@@ -117,24 +115,22 @@ public class UserController {
 
     @GetMapping("/recommend")
     public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNum,HttpServletRequest request) {
-        User loginUser = userService.getLoginUser(request);
-        String redisKey = String.format("partner:recommendUsers:%s", loginUser.getId());
+        String redisKey = String.format("partner:recommendUsers:%s%s",pageSize,pageNum);
         ValueOperations<String, Serializable> valueOperations = redisTemplate.opsForValue();
         //如果有缓存，直接返回缓存
         Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
-        if(userPage == null){
-            redisKey = String.format("partner:recommendUsers:%s%s",pageSize,pageNum);
-            userPage = (Page<User>) valueOperations.get(redisKey);
-        }
         if (userPage != null) {
+            System.out.println("缓存命中");
             return ResultUtils.success(userPage);
         }
         //如果没有缓存，查询数据库
+        System.out.println("无缓存");
         QueryWrapper<User> wrapper = new QueryWrapper<>();
         userPage = userService.page(new Page<>(pageNum, pageSize), wrapper);
         //缓存结果
         try {
             valueOperations.set(redisKey, userPage,30000, TimeUnit.MILLISECONDS);
+            System.out.println("缓存成功");
         } catch (Exception e) {
             log.error("缓存失败", e);
         }
@@ -152,6 +148,17 @@ public class UserController {
         int result = userService.updateUser(updateUser, loginUser);
         return ResultUtils.success(result);
     }
+
+    @PostMapping("/update/tags")
+    public BaseResponse<Integer> updateUserTags(@RequestBody Map<String, List<String>> requestMap, HttpServletRequest request) {
+        List<String> tagNameList = requestMap.get("tagList");
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser == null)
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        int result = userService.updateUserTags(loginUser, tagNameList);
+        return ResultUtils.success(result);
+    }
+
 
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteUser(@RequestParam Long id, HttpServletRequest request) {
@@ -190,43 +197,10 @@ public class UserController {
         //缓存结果
         try {
             System.out.println("无缓存");
-            valueOperations.set(redisKey, (Serializable) userList,300000, TimeUnit.MILLISECONDS);
+            valueOperations.set(redisKey, (Serializable) userList,10, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("缓存失败", e);
         }
         return ResultUtils.success(userList);
-    }
-
-    @PostMapping("follow")
-    public BaseResponse<Boolean> followUser(@RequestParam("followId") Long followId, HttpServletRequest request) {
-        User loginUser = userService.getLoginUser(request);
-        if (loginUser == null)
-            throw new BusinessException(ErrorCode.NOT_LOGIN);
-        if (followId == null || followId <= 0)
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
-        boolean b = followsService.followUser(loginUser.getId(), followId);
-        return ResultUtils.success(b);
-    }
-
-    @PostMapping("unfollow")
-    public BaseResponse<Boolean> unfollowUser(@RequestParam Long followId, HttpServletRequest request) {
-        User loginUser = userService.getLoginUser(request);
-        if (loginUser == null)
-            throw new BusinessException(ErrorCode.NOT_LOGIN);
-        if (followId == null || followId <= 0)
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
-        boolean b = followsService.unfollowUser(loginUser.getId(), followId);
-        return ResultUtils.success(b);
-    }
-
-    @GetMapping("isFollow")
-    public BaseResponse<Boolean> isFollow(@RequestParam Long followId, HttpServletRequest request) {
-        User loginUser = userService.getLoginUser(request);
-        if (loginUser == null)
-            throw new BusinessException(ErrorCode.NOT_LOGIN);
-        if (followId == null || followId <= 0)
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
-        boolean b = followsService.isFollow(loginUser.getId(), followId);
-        return ResultUtils.success(b);
     }
 }

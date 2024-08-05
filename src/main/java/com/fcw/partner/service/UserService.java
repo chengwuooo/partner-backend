@@ -83,4 +83,11 @@ public interface UserService extends IService<User> {
      * 匹配用户
      */
     List<User> matchUsers(long num, User loginUser);
+
+    int updateUserTags(User loginUser, List<String> tagNameList);
+
+    /**
+     * 根据id列表查询用户
+     */
+    List<User> listUsersByIds(List<Long> ids);
 }
