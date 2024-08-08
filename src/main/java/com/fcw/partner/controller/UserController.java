@@ -35,7 +35,7 @@ import static com.fcw.partner.constant.UserConstant.USER_LOGIN_STATE;
 @RestController
 @RequestMapping("/user")
 @Slf4j
-//@CrossOrigin(origins = {"http://localhost:3000","http://47.109.196.49"})
+//@CrossOrigin(origins = {"http://localhost:3000","http://8.137.124.99"})
 public class UserController {
     @Resource
     private UserService userService;
@@ -115,6 +115,9 @@ public class UserController {
 
     @GetMapping("/recommend")
     public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNum,HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser == null)
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
         String redisKey = String.format("partner:recommendUsers:%s%s",pageSize,pageNum);
         ValueOperations<String, Serializable> valueOperations = redisTemplate.opsForValue();
         //如果有缓存，直接返回缓存
