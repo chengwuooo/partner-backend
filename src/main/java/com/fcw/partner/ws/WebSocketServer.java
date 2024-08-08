@@ -99,13 +99,17 @@ public class WebSocketServer {
     /**
      * 队伍内群发消息
      *
-     * @param teamId
-     * @param msg
-     * @throws Exception
+     * @param teamId 队伍标识符，用于定位到特定的队伍
+     * @param msg    需要发送的消息内容
+     * @throws Exception 如果发送过程中出现错误，可能会抛出异常
+     *
+     * 本方法通过使用 ConcurrentHashMap 来确保在并发环境下安全地对队伍内的所有连接进行消息广播
+     * ConcurrentHashMap 的 key 是用户的唯一标识，value 是对应的 WebSocketServer 实例
+     * 遍历 ConcurrentHashMap 的 keySet 来实现对所有用户的广播
      */
     public static void broadcast(String teamId, String msg) {
         ConcurrentHashMap<String, WebSocketServer> map = ROOMS.get(teamId);
-        // keySet获取map集合key的集合  然后在遍历key即可
+        // 遍历所有用户，尝试发送消息
         for (String key : map.keySet()) {
             try {
                 WebSocketServer webSocket = map.get(key);
@@ -115,6 +119,7 @@ public class WebSocketServer {
             }
         }
     }
+
 
     /**
      * 发送消息
@@ -126,22 +131,35 @@ public class WebSocketServer {
         this.session.getBasicRemote().sendText(message);
     }
 
+    /**
+     * 当WebSocket连接打开时调用的方法
+     *
+     * @param session WebSocket会话对象
+     * @param userId 用户ID，用于识别用户
+     * @param teamId 团队ID，用于将用户分配到不同的团队房间
+     * @param config Endpoint配置，包含会话的配置信息
+     */
     @OnOpen
     public void onOpen(Session session, @PathParam(value = "userId") String userId, @PathParam(value = "teamId") String teamId, EndpointConfig config) {
-        System.out.println("userId = " + userId);
         log.info("userId = {}", userId);
         try {
+            // 检查userId是否有效
             if (StringUtils.isBlank(userId) || "undefined".equals(userId)) {
                 sendError(userId, "参数有误");
                 return;
             }
+            // 获取HttpSession对象，用于获取用户信息
             HttpSession httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
+            // 从会话中获取用户信息
             User user = (User) httpSession.getAttribute(USER_LOGIN_STATE);
+            // 如果用户已登录，则初始化WebSocket会话信息
             if (user != null) {
                 this.session = session;
                 this.httpSession = httpSession;
             }
-            if (!"NaN".equals(teamId)) {
+            // 处理团队房间的加入逻辑
+            if (!"0".equals(teamId)) {
+                // 如果该团队房间不存在，则创建新房间
                 if (!ROOMS.containsKey(teamId)) {
                     ConcurrentHashMap<String, WebSocketServer> room = new ConcurrentHashMap<>(0);
                     room.put(userId, this);
@@ -149,6 +167,7 @@ public class WebSocketServer {
                     // 在线数加1
                     addOnlineCount();
                 } else {
+                    // 如果房间存在，但用户尚未加入，则将用户添加到房间
                     if (!ROOMS.get(teamId).containsKey(userId)) {
                         ROOMS.get(teamId).put(userId, this);
                         // 在线数加1
@@ -157,9 +176,11 @@ public class WebSocketServer {
                 }
                 log.info("有新连接加入！当前在线人数为" + getOnlineCount());
             } else {
+                // 如果团队ID为0，将用户会话添加到全局会话列表
                 SESSIONS.add(session);
                 SESSION_POOL.put(userId, session);
                 log.info("有新用户加入，userId={}, 当前在线人数为：{}", userId, SESSION_POOL.size());
+                // 通知其他用户此新用户的加入
                 sendAllUsers();
             }
         } catch (Exception e) {
@@ -170,7 +191,7 @@ public class WebSocketServer {
     @OnClose
     public void onClose(@PathParam("userId") String userId, @PathParam(value = "teamId") String teamId, Session session) {
         try {
-            if (!"NaN".equals(teamId)) {
+            if (!"0".equals(teamId)) {
                 ROOMS.get(teamId).remove(userId);
                 if (getOnlineCount() > 0) {
                     subOnlineCount();
@@ -338,11 +359,12 @@ public class WebSocketServer {
      * @param message 消息
      */
     public void sendAllMessage(String message) {
-        log.info("【WebSocket消息】广播消息：" + message);
+        System.out.println("当前大厅在线人数"+SESSIONS.size());
         for (Session session : SESSIONS) {
             try {
                 if (session.isOpen()) {
                     synchronized (session) {
+                        log.info("【WebSocket消息】广播消息：" + message);
                         session.getBasicRemote().sendText(message);
                     }
                 }
