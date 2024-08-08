@@ -15,6 +15,8 @@ import java.util.List;
 */
 public interface FollowsMapper extends BaseMapper<Follows> {
     List<User> listMutualFollowUsers(@Param("loginUserId") long loginUserId, @Param("isActive") boolean isActive);
+
+    List<User> listFollows(long loginUserId, boolean isActive);
 }
 
 

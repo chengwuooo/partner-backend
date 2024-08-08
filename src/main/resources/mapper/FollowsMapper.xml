@@ -5,11 +5,11 @@
 <mapper namespace="com.fcw.partner.mapper.FollowsMapper">
 
     <resultMap id="BaseResultMap" type="com.fcw.partner.model.domain.Follows">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="user_id" column="user_id" jdbcType="BIGINT"/>
-            <result property="followed_id" column="followed_id" jdbcType="BIGINT"/>
-            <result property="created_at" column="created_at" jdbcType="TIMESTAMP"/>
-            <result property="is_active" column="is_active" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="user_id" column="user_id" jdbcType="BIGINT"/>
+        <result property="followed_id" column="followed_id" jdbcType="BIGINT"/>
+        <result property="created_at" column="created_at" jdbcType="TIMESTAMP"/>
+        <result property="is_active" column="is_active" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -21,7 +21,26 @@
         FROM follows f1
                  INNER JOIN follows f2 ON f1.followed_id = f2.user_id AND f2.followed_id = f1.user_id
                  INNER JOIN user u ON f1.followed_id = u.id
-        WHERE f1.user_id = #{loginUserId} AND f1.is_active = #{isActive} AND f2.is_active = #{isActive}
+        WHERE f1.user_id = #{loginUserId}
+          AND f1.is_active = #{isActive}
+          AND f2.is_active = #{isActive}
+    </select>
+
+
+    <select id="listFollows" resultType="com.fcw.partner.model.domain.User">
+        SELECT u.*
+        FROM follows f
+                 INNER JOIN user u ON f.followed_id = u.id
+        WHERE f.user_id = #{loginUserId}
+          AND f.is_active = #{isActive}
+    </select>
+
+    <select id="listFans" resultType="com.fcw.partner.model.domain.User">
+        SELECT u.*
+        FROM follows f
+                 INNER JOIN user u ON f.user_id = u.id
+        WHERE f.followed_id = #{loginUserId}
+          AND f.is_active = #{isActive}
     </select>
 
 

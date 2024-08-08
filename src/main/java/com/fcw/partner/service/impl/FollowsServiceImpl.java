@@ -150,15 +150,9 @@ public class FollowsServiceImpl extends ServiceImpl<FollowsMapper, Follows>
     public List<User> listFollows(User loginUser) {
         long loginUserID = loginUser.getId();
 
-        LambdaQueryWrapper<Follows> listFollowsQueryWrapper = new LambdaQueryWrapper<>();
+        List<User> userList = followsMapper.listFollows(loginUserID, true);
 
-        listFollowsQueryWrapper.eq(Follows::getUser_id, loginUserID)
-                .eq(Follows::getIs_active, IS_ACTIVE);
-        List<Follows> followsList = followsMapper.selectList(listFollowsQueryWrapper);
-
-        List<Long> listUserIds = followsList.stream().map(Follows::getFollowed_id).collect(Collectors.toList());
-
-        return userService.listUsersByIds(new ArrayList<>(listUserIds));
+        return userList.stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
     }
 
     /**
