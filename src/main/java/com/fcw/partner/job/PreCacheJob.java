@@ -28,7 +28,7 @@ public class PreCacheJob {
     private RedissonClient redissonClient;
 
 
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 300000)
     public void doCacheRecommendUser() {
         RLock lock = redissonClient.getLock("partner:preCacheJob:doCache:lock");
         try {
@@ -39,9 +39,9 @@ public class PreCacheJob {
                 Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
                 String redisKey = String.format("partner:recommendUsers:101");
                 ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-                //写缓存,30s过期
+                //写缓存,300s过期
                 try {
-                    valueOperations.set(redisKey, userPage, 30, TimeUnit.SECONDS);
+                    valueOperations.set(redisKey, userPage, 300, TimeUnit.SECONDS);
                 } catch (Exception e) {
                     log.error("redis set key error", e);
                 }
